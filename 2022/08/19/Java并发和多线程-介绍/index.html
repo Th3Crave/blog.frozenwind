@@ -1,0 +1,84 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description"><title>Java并发和多线程-介绍 | frozeNwInd</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.0.0"><link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/normalize.css/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/purecss/build/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/purecss/build/grids-responsive-min.css"><link rel="stylesheet" href="//cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/clipboard/dist/clipboard.min.js"></script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/codeseven/toastr/build/toastr.min.js"></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/codeseven/toastr/build/toastr.min.css"><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">Java并发和多线程-介绍</h1><a id="logo" href="/.">frozeNwInd</a><p class="description">吕乘风的博客</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/history/"><i class="fa fa-history"> 历史</i></a><a href="/MoonAndStar/"><i class="fa fa-heart"> Moon&amp;Star</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">Java并发和多线程-介绍</h1><div class="post-meta">2022-08-19<span> | </span><span class="category"><a href="/categories/technology/">technology</a></span></div><a class="disqus-comment-count" href="/2022/08/19/Java%E5%B9%B6%E5%8F%91%E5%92%8C%E5%A4%9A%E7%BA%BF%E7%A8%8B-%E4%BB%8B%E7%BB%8D/#vcomment"><span class="valine-comment-count" data-xid="/2022/08/19/Java%E5%B9%B6%E5%8F%91%E5%92%8C%E5%A4%9A%E7%BA%BF%E7%A8%8B-%E4%BB%8B%E7%BB%8D/"></span><span> 条评论</span></a><div class="post-content"><h3 id="多线程的优缺点"><a href="#多线程的优缺点" class="headerlink" title="多线程的优缺点"></a>多线程的优缺点</h3><ul>
+<li><p>资源利用率更好</p>
+</li>
+<li><p>程序设计在某些情况下更简单</p>
+</li>
+<li><p>程序响应更快</p>
+</li>
+<li><p>设计更复杂</p>
+</li>
+<li><p>上下文切换的开销</p>
+</li>
+<li><p>增加资源消耗</p>
+</li>
+</ul>
+<h3 id="并发编程模型"><a href="#并发编程模型" class="headerlink" title="并发编程模型"></a>并发编程模型</h3><p>并发系统可以采用多种并发编程模型来实现。并发模型指定了系统中的线程如何通过协作来完成分配给它们的作业。不同的并发模型采用不同的方式拆分作业，同时线程间的协作和交互方式也不相同。</p>
+<p>并发模型与分布式系统之间的相似性？</p>
+<ul>
+<li>并行工作者</li>
+<li>流水线模式</li>
+<li>函数式并行</li>
+</ul>
+<h3 id="如何创建并运行java线程"><a href="#如何创建并运行java线程" class="headerlink" title="如何创建并运行java线程"></a>如何创建并运行java线程</h3><ol>
+<li>创建Thread子类的一个实例并重写run()方法，调用start()方法</li>
+<li>实现Runnable接口并实现run()方法，在Thread类的构造函数中传入实现Runnable接口的类的实例对象</li>
+</ol>
+<h3 id="竞态条件与临界区"><a href="#竞态条件与临界区" class="headerlink" title="竞态条件与临界区"></a>竞态条件与临界区</h3><p>在同一程序中运行多个线程本身不会导致问题，问题在于多个线程访问了相同的资源，如，同一内存区（变量，数组，或对象）、系统（数据库，web service等）。实际上，这些问题只有在一或多个线程向这些资源做了写操作时才有可能发生，只要资源没有发生变化，多个线程读取相同的资源就是安全的。</p>
+<ul>
+<li>当两个线程竞争同一资源时，如果对资源的访问顺序敏感，就称存在竞态条件</li>
+<li>导致竞态条件发生的代码区称作临界区</li>
+</ul>
+<p>在临界区中使用适当的同步可以避免竞态条件。</p>
+<h3 id="线程安全与共享资源"><a href="#线程安全与共享资源" class="headerlink" title="线程安全与共享资源"></a>线程安全与共享资源</h3><p>允许被多个线程同时执行的代码称作线程安全的代码。线程安全的代码不包含竞态条件。当多个线程同时更新共享资源时会引发竞态条件。因此，了解Java线程执行时共享了什么资源很重要。</p>
+<ul>
+<li>局部变量</li>
+<li>局部的对象引用</li>
+<li>对象成员</li>
+</ul>
+<h4 id="线程控制逃逸规则"><a href="#线程控制逃逸规则" class="headerlink" title="线程控制逃逸规则"></a>线程控制逃逸规则</h4><p>如果一个资源的创建，使用，销毁都在同一个线程内完成，且永远不会脱离该线程的控制，则该资源的使用就是线程安全的。</p>
+<h3 id="线程安全及不可变性"><a href="#线程安全及不可变性" class="headerlink" title="线程安全及不可变性"></a>线程安全及不可变性</h3><h3 id="Java内存模型"><a href="#Java内存模型" class="headerlink" title="Java内存模型"></a>Java内存模型</h3><p>Java内存模型规范了Java虚拟机与计算机内存是如何协同工作的。Java虚拟机是一个完整的计算机的一个模型，因此这个模型自然也包含一个内存模型，即Java内存模型。</p>
+<p>Java内存模型规定了如何和何时可以看到由其他线程修改过后的共享变量的值，以及在必须时如何同步的访问共享变量。</p>
+<p>原始的Java内存模型存在一些不足，因此Java内存模型在Java1.5时被重新修订。这个版本的Java内存模型在Java8中使用。</p>
+<h4 id="Java内存模型和硬件内存架构之间的桥接"><a href="#Java内存模型和硬件内存架构之间的桥接" class="headerlink" title="Java内存模型和硬件内存架构之间的桥接"></a>Java内存模型和硬件内存架构之间的桥接</h4><p>所有的线程栈和堆都分布在主存中，部分线程栈和堆可能有时候会出现在CPU缓存和CPU内部的寄存器中。<br><img src="/2022/08/19/Java%E5%B9%B6%E5%8F%91%E5%92%8C%E5%A4%9A%E7%BA%BF%E7%A8%8B-%E4%BB%8B%E7%BB%8D/java-memory-model-5.png"></p>
+<p>当对象和变量被存放在计算机中各种不同的内存区域中时，就可能会出现一些具体的问题，主要包括如下两个方面：</p>
+<ul>
+<li>线程对共享变量修改的可见性</li>
+<li>当读/写和检查共享变量时出现<code>race condition 竞态条件</code></li>
+</ul>
+<h4 id="共享对象可见性"><a href="#共享对象可见性" class="headerlink" title="共享对象可见性"></a>共享对象可见性</h4><p>如果两个或者更多的线程在没有正确的使用volatile声明或者同步的情况下共享一个对象，一个线程更新这个共享对象可能对其它线程来说是不可见的。</p>
+<p>想象一下，共享对象被初始化在主存中。跑在CPU上的一个线程将这个共享对象读到CPU缓存中。然后修改了这个对象。只要CPU缓存没有被刷新会主存，对象修改后的版本对跑在其它CPU上的线程都是不可见的。这种方式可能导致每个线程拥有这个共享对象的私有拷贝，每个拷贝停留在不同的CPU缓存中。</p>
+<p><img src="/2022/08/19/Java%E5%B9%B6%E5%8F%91%E5%92%8C%E5%A4%9A%E7%BA%BF%E7%A8%8B-%E4%BB%8B%E7%BB%8D/java-memory-model-6.png"></p>
+<p>解决这个问题你可以使用Java中的volatile关键字。volatile关键字可以保证直接从主存中读取一个变量，如果这个变量被修改后，总是会被写回到主存中去。</p>
+<h4 id="race-condition"><a href="#race-condition" class="headerlink" title="race condition"></a>race condition</h4><p>如果两个或者更多的线程共享一个对象，多个线程在这个共享对象上更新变量，就有可能发生race conditions。</p>
+<p>想象一下，如果线程A读一个共享对象的变量count到它的CPU缓存中。再想象一下，线程B也做了同样的事情，但是往一个不同的CPU缓存中。现在线程A将count加1，线程B也做了同样的事情。现在count已经被增在了两个，每个CPU缓存中一次。</p>
+<p>如果这些增加操作被顺序的执行，变量count应该被增加两次，然后原值+2被写回到主存中去。</p>
+<p>然而，两次增加都是在没有适当的同步下并发执行的。无论是线程A还是线程B将count修改后的版本写回到主存中取，修改后的值仅会被原值大1，尽管增加了两次。<br><img src="/2022/08/19/Java%E5%B9%B6%E5%8F%91%E5%92%8C%E5%A4%9A%E7%BA%BF%E7%A8%8B-%E4%BB%8B%E7%BB%8D/java-memory-model-7.png"></p>
+<p>解决这个问题可以使用Java同步块。一个同步块可以保证在同一时刻仅有一个线程可以进入代码的临界区。同步块还可以保证代码块中所有被访问的变量将会从主存中读入，当线程退出同步代码块时，所有被更新的变量都会被刷新回主存中去，不管这个变量是否被声明为volatile。</p>
+<h3 id="Java同步块"><a href="#Java同步块" class="headerlink" title="Java同步块"></a>Java同步块</h3><p>Java 同步块（synchronized block）用来标记方法或者代码块是同步的。Java同步块用来避免竞争。</p>
+<ul>
+<li>Java同步关键字（synchronized）</li>
+<li>实例方法同步</li>
+<li>静态方法同步</li>
+<li>实例方法中同步块</li>
+<li>静态方法中同步块</li>
+</ul>
+<h3 id="线程通信"><a href="#线程通信" class="headerlink" title="线程通信"></a>线程通信</h3><p>线程通信的目标是使线程间能够互相发送信号。另一方面，线程通信使线程能够等待其他线程的信号。</p>
+</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css"><script type="text/javascript" src="/js/donate.js" successtext="复制成功!"></script><a class="pos-f tr3" id="github" target="_blank" rel="noopener" href="https://github.com/Kaiyuan/donate-page" arget="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="AliPay" qr="/img/AliPayQR.png"></li><li id="WeChat" qr="/img/WeChatQR.png"></li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="tags"><a href="/tags/Java%E5%B9%B6%E5%8F%91%E5%92%8C%E5%A4%9A%E7%BA%BF%E7%A8%8B/"><i class="fa fa-tag"></i>Java并发和多线程</a></div><div class="post-nav"><a class="pre" href="/2022/08/25/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E2%80%94%E2%80%94Kafka/">消息队列——Kafka</a><a class="next" href="/2022/08/05/IDE%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91-vscode/">IDE插件开发-VS Code</a></div><div id="vcomment"></div><script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == 'true' ? true : false;
+var verify = 'false' == 'true' ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'NPvQJfh7XNHqMqbmVYOg5VE5-9Nh9j0Va',
+  appKey:'hgOdKtBYlsJzigDKoXqevrSI',
+  placeholder:'我想听你说一句… （留言请填写您的昵称和邮箱，方便回复以邮件形式通知您）',
+  avatar:'mm',
+  guest_info:guest_info,
+  pageSize:'10'
+})
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="https://blog.frozenwind.online"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div><ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/emotion/">emotion</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/technology/">technology</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"><a href="/tags/IDE%E6%8F%92%E4%BB%B6/" style="font-size: 15px;">IDE插件</a> <a href="/tags/java%E5%9F%BA%E7%A1%80/" style="font-size: 15px;">java基础</a> <a href="/tags/Java/" style="font-size: 15px;">Java</a> <a href="/tags/Maven/" style="font-size: 15px;">Maven</a> <a href="/tags/Nginx/" style="font-size: 15px;">Nginx</a> <a href="/tags/Java%E5%B9%B6%E5%8F%91%E5%92%8C%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 15px;">Java并发和多线程</a> <a href="/tags/MySQL/" style="font-size: 15px;">MySQL</a> <a href="/tags/SpringBoot/" style="font-size: 15px;">SpringBoot</a> <a href="/tags/Redis/" style="font-size: 15px;">Redis</a> <a href="/tags/Tomcat/" style="font-size: 15px;">Tomcat</a> <a href="/tags/hexo/" style="font-size: 15px;">hexo</a> <a href="/tags/linux/" style="font-size: 15px;">linux</a> <a href="/tags/markdown/" style="font-size: 15px;">markdown</a> <a href="/tags/Nexus/" style="font-size: 15px;">Nexus</a> <a href="/tags/spring/" style="font-size: 15px;">spring</a> <a href="/tags/Windows/" style="font-size: 15px;">Windows</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8FID/" style="font-size: 15px;">分布式ID</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" style="font-size: 15px;">分布式事务</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E7%BC%93%E5%AD%98/" style="font-size: 15px;">分布式缓存</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" style="font-size: 15px;">分布式锁</a> <a href="/tags/%E5%B7%A5%E4%BD%9C%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95/" style="font-size: 15px;">工作问题记录</a> <a href="/tags/%E5%BE%AE%E4%BF%A1%E5%B0%8F%E7%A8%8B%E5%BA%8F/" style="font-size: 15px;">微信小程序</a> <a href="/tags/%E6%83%85%E4%B9%A6/" style="font-size: 15px;">情书</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" style="font-size: 15px;">数据结构与算法</a> <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" style="font-size: 15px;">操作系统</a> <a href="/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" style="font-size: 15px;">消息队列</a> <a href="/tags/JVM/" style="font-size: 15px;">JVM</a> <a href="/tags/%E6%B8%AF%E4%B9%90/" style="font-size: 15px;">港乐</a> <a href="/tags/%E7%A7%92%E6%9D%80%E7%B3%BB%E7%BB%9F/" style="font-size: 15px;">秒杀系统</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" style="font-size: 15px;">计算机网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 15px;">设计模式</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 15px;">随笔</a> <a href="/tags/%E8%AF%8D/" style="font-size: 15px;">词</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/09/05/%E5%AE%9E%E9%99%85%E5%BC%80%E5%8F%91%E4%B8%AD%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98/">实际开发中遇到的问题</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/08/31/SpringBoot-Tomcat/">SpringBoot-Tomcat</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/08/31/Tomcat/">Tomcat</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/08/25/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E2%80%94%E2%80%94Apache%20Pulsar/">消息队列——Apache Pulsar</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/08/25/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E2%80%94%E2%80%94Kafka/">消息队列——Kafka</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/08/19/Java%E5%B9%B6%E5%8F%91%E5%92%8C%E5%A4%9A%E7%BA%BF%E7%A8%8B-%E4%BB%8B%E7%BB%8D/">Java并发和多线程-介绍</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/08/05/IDE%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91-vscode/">IDE插件开发-VS Code</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/08/05/IDE%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91-IntelliJ%E5%B9%B3%E5%8F%B0/">IDE插件开发-IntelliJ平台</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/06/29/Java%E6%BA%90%E7%A0%81-Object/">Java源码-Object</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/06/28/Java%E6%BA%90%E7%A0%81-HashMap/">Java源码-HashMap</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://blog.scarboroughcoral.top/" title="scarboroughcoral" target="_blank">scarboroughcoral</a><ul></ul><a href="http://blog.wangxuyao.club/" title="冰冰冰淇淋君icecream" target="_blank">冰冰冰淇淋君icecream</a><ul></ul><a target="_blank"></a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2022 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0" async></script><link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox/dist/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>
