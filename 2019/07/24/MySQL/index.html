@@ -246,7 +246,7 @@
 <p>一般情况下，得保证查询至少达到range级别，最好能达到ref。</p>
 <ol>
 <li>ALL                全表扫描</li>
-<li>index              索引全扫描</li>
+<li>index              索引树全扫描</li>
 <li>range              索引范围扫描，常用语&lt;,&lt;=,&gt;=,between等操作</li>
 <li>ref                使用非唯一索引扫描或唯一索引前缀扫描，返回单条记录，常出现在关联查询中</li>
 <li>eq_ref             类似ref，区别在于使用的是唯一索引，使用主键的关联查询</li>
