@@ -303,7 +303,7 @@
 <li>跳表 - ZSkipList</li>
 </ul>
 <h4 id="简单动态字符串-sds"><a href="#简单动态字符串-sds" class="headerlink" title="简单动态字符串 - sds"></a>简单动态字符串 - sds</h4><blockquote>
-<p>Redis 是用 C 语言写的，但是对于Redis的字符串，却不是 C 语言中的字符串（即以空字符’\0’结尾的字符数组），它是自己构建了一种名为 简单动态字符串（simple dynamic string,SDS）的抽象类型，并将 SDS 作为 Redis的默认字符串表示。</p>
+<p>Redis 是用 C 语言写的，但是对于Redis的字符串，却不是 C 语言中的字符串（即以空字符’\0’结尾的字符数组），它是自己构建了一种名为<code>简单动态字符串（simple dynamic string,SDS）</code>的抽象类型，并将 SDS 作为 Redis的默认字符串表示。</p>
 </blockquote>
 <h4 id="压缩列表-ZipList"><a href="#压缩列表-ZipList" class="headerlink" title="压缩列表 - ZipList"></a>压缩列表 - ZipList</h4><blockquote>
 <p>ziplist是为了提高存储效率而设计的一种特殊编码的双向链表。<br>它可以存储字符串或者整数，存储整数时是采用整数的二进制而不是字符串形式存储。<br>它能在O(1)的时间复杂度下完成list两端的push和pop操作。<br>但是因为每次操作都需要重新分配ziplist的内存，所以实际复杂度和ziplist的内存使用量相关。</p>
