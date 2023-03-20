@@ -56,22 +56,24 @@
 <li><code>heartbeat.interval.ms</code>：标识Consumer给Coordinator发一个心跳包的时间间隔。heartbeat.interval.ms越小，发的心跳包越多。默认值3秒。</li>
 <li>Group Coordinator<br>  对于每一个Consumer Group，Kafka集群为其从Broker集群中选择一个Broker作为其Coordinator。Coordinator主要做两件事：<ol>
 <li>维持Group成员的组成。这包括加入新的成员，检测成员的存活性，清除不再存活的成员。</li>
-<li>协调Group成员的行为。<h4 id="重复消费的原因"><a href="#重复消费的原因" class="headerlink" title="重复消费的原因"></a>重复消费的原因</h4></li>
+<li>协调Group成员的行为。</li>
 </ol>
 </li>
+</ul>
+<h4 id="重复消费的原因"><a href="#重复消费的原因" class="headerlink" title="重复消费的原因"></a>重复消费的原因</h4><ul>
 <li>原因1：消费者宕机、重启或者被强行kill进程，导致消费者消费的offset没有提交。</li>
 <li>原因2：设置<code>enable.auto.commit</code>为true，如果在关闭消费者进程之前，取消了消费者的订阅，则有可能部分offset没提交，下次重启会重复消费。</li>
-<li>原因3：消费后的数据，当offset还没有提交时，Partition就断开连接。比如，通常会遇到消费的数据，处理很耗时，导致超过了Kafka的<code>session timeout.ms</code>时间，那么就会触发reblance重平衡，此时可能存在消费者offset没提交，会导致重平衡后重复消费。<h4 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h4></li>
+<li>原因3：消费后的数据，当offset还没有提交时，Partition就断开连接。比如，通常会遇到消费的数据，处理很耗时，导致超过了Kafka的<code>session timeout.ms</code>时间，那么就会触发reblance重平衡，此时可能存在消费者offset没提交，会导致重平衡后重复消费。</li>
 </ul>
-<ol>
+<h4 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h4><ol>
 <li>提高消费者的处理速度。<br> 例如：对消息处理中比较耗时的步骤可通过异步的方式进行处理、利用多线程处理等。<br> 在缩短单条消息消费的同时，根据实际场景可将<code>max.poll.interval.ms</code>值设置大一点，避免不必要的Rebalance。<br> 可根据实际消息速率适当调小<code>max.poll.records</code>的值。</li>
 <li>引入消息去重机制。<br> 例如：生成消息时，在消息中加入唯一标识符，如消息id等。在消费端，可以保存最近的<code>max.poll.records</code>条消息id到redis或mysql表中，这样在消费消息时先通过查询去重后，再进行消息的处理。</li>
 <li>保证消费者逻辑幂等。<blockquote>
 <p>如何实现接口的幂等性</p>
 </blockquote>
-<h3 id="4-顺序消费"><a href="#4-顺序消费" class="headerlink" title="4. 顺序消费"></a>4. 顺序消费</h3><h3 id="5-消息积压"><a href="#5-消息积压" class="headerlink" title="5. 消息积压"></a>5. 消息积压</h3><h3 id><a href="#" class="headerlink" title></a></h3></li>
+</li>
 </ol>
-</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="AliPay" qr="/img/AliPayQR.png"></li><li id="WeChat" qr="/img/WeChatQR.png"></li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="tags"><a href="/tags/消息队列"><i class="fa fa-tag">消息队列</i></a></div><div class="post-nav"><a class="pre" href="/2023/03/19/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E2%80%94%E2%80%94Kafka/">消息队列——Kafka</a><a class="next" href="/2023/03/05/Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">Redis数据结构</a></div><div id="vcomment"></div><script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == 'true' ? true : false;
+<h3 id="4-顺序消费"><a href="#4-顺序消费" class="headerlink" title="4. 顺序消费"></a>4. 顺序消费</h3><h3 id="5-消息积压"><a href="#5-消息积压" class="headerlink" title="5. 消息积压"></a>5. 消息积压</h3><h3 id><a href="#" class="headerlink" title></a></h3></div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="AliPay" qr="/img/AliPayQR.png"></li><li id="WeChat" qr="/img/WeChatQR.png"></li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="tags"><a href="/tags/消息队列"><i class="fa fa-tag">消息队列</i></a></div><div class="post-nav"><a class="pre" href="/2023/03/19/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E2%80%94%E2%80%94Kafka/">消息队列——Kafka</a><a class="next" href="/2023/03/05/Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">Redis数据结构</a></div><div id="vcomment"></div><script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == 'true' ? true : false;
 var verify = 'false' == 'true' ? true : false;
 var GUEST_INFO = ['nick','mail','link'];
 var guest_info = 'nick,mail'.split(',').filter(function(item){
