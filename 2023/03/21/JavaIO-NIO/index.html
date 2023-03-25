@@ -49,7 +49,7 @@
 <p>IO多路复用技术最适用的是<strong>高并发</strong>场景，所谓高并发是指1毫秒内至少同时有上千个连接请求准备好。其他情况下IO多路复用技术发挥不出来它的优势。</p>
 <p>select、poll、epoll、kqueue是操作系统层面的IO多路复用的实现方法。<br>Reactor模型、Proactor模型是应用程序层面处理并发I/O的模型。</p>
 <h3 id="典型的IO多路复用实现"><a href="#典型的IO多路复用实现" class="headerlink" title="典型的IO多路复用实现"></a>典型的IO多路复用实现</h3><h4 id="select"><a href="#select" class="headerlink" title="select"></a>select</h4><h4 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h4><h4 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h4><h4 id="kqueue"><a href="#kqueue" class="headerlink" title="kqueue"></a>kqueue</h4><h3 id="传统IO模型"><a href="#传统IO模型" class="headerlink" title="传统IO模型"></a>传统IO模型</h3><p>对于传统IO模型，其主要是一个Server对接N个客户端，在客户端连接之后，为每个客户端都分配一个执行线程。<br>如下图是该模型的一个演示：<br><img src="/2023/03/21/JavaIO-NIO/java-io-%E4%BC%A0%E7%BB%9Fio%E6%A8%A1%E5%9E%8B.png"></p>
-<h3 id="Reactor模型"><a href="#Reactor模型" class="headerlink" title="Reactor模型"></a>Reactor模型</h3><p>在传统IO模型中，由于线程在等待连接以及进行IO操作时都会阻塞当前线程，这部分损耗是非常大的。<br>因而jdk 1.4中就提供了一套非阻塞IO的API。该API本质上是以事件驱动来处理网络事件的，而Reactor是基于该API提出的一套IO模型。</p>
+<h3 id="Reactor模型"><a href="#Reactor模型" class="headerlink" title="Reactor模型"></a>Reactor模型</h3><p>在传统IO模型中，由于线程在等待连接以及进行IO操作时都会阻塞当前线程，这部分损耗是非常大的。<br>因而jdk 1.4中就提供了一套非阻塞IO的NIO API。该API本质上是以事件驱动来处理网络事件的，而Reactor是基于该API提出的一套IO模型。</p>
 <p>Reactor 模式特别适合应用于处理多个客户端并发向服务器端发送请求的场景。</p>
 <p>在Reactor模型中，主要有3个角色：</p>
 <ul>
