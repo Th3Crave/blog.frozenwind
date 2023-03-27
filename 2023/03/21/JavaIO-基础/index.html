@@ -69,8 +69,9 @@
 </ul>
 <p>网络IO 的写操作也有<strong>四次</strong>缓冲区的copy，第一次是从磁盘缓冲区到内核缓冲区（由DMA控制），第二次是内核缓冲区到用户缓冲区（CPU控制），第三次是用户缓冲区到内核缓冲区的 Socket Buffer（由CPU控制），第四次是从内核缓冲区的 Socket Buffer 到网卡设备（由DMA控制）。四次缓冲区的copy工作两次由CPU控制，两次由DMA控制。</p>
 <p><strong>网络IO的延时</strong><br>网络IO主要延时是由：<strong>服务器响应延时+带宽限制+网络延时+跳转路由延时+本地接收延时</strong>决定。一般为几十到几千毫秒，受环境影响较大。<br>所以，一般来说，网络IO延时要大于磁盘IO延时(不过同数据中心的交互除外，会比磁盘 IO 更快)。</p>
-<h3 id="零拷贝"><a href="#零拷贝" class="headerlink" title="零拷贝"></a>零拷贝</h3><h4 id="mmap"><a href="#mmap" class="headerlink" title="mmap"></a>mmap</h4><p>mmap 是一种内存映射文件的方法，即将一个文件或者其他对象映射到进程的地址空间，实现文件磁盘地址和进程虚拟地址空间中一段虚拟地址的一一映射关系。</p>
-<h4 id="sendFile"><a href="#sendFile" class="headerlink" title="sendFile"></a>sendFile</h4><p><strong>sendfile</strong>要求输入的fd必须是文件句柄，不能是socket，输出的fd必须是socket，也就是说，数据的来源必须是从本地的磁盘，而不能是从网络中。</p>
+<h3 id="零拷贝"><a href="#零拷贝" class="headerlink" title="零拷贝"></a>零拷贝</h3><h4 id="mmap"><a href="#mmap" class="headerlink" title="mmap"></a>mmap</h4><p>mmap的核心思想是：应用程序这边由于在用户态无法直接操作寄存器的物理地址，于是通过mmap方法进行内存映射，将物理地址映射到用户态的虚拟地址上，然后应用程序通过读写自己手边的虚拟地址，就可以实现对物理地址的读取/写入。</p>
+<h4 id="sendFile"><a href="#sendFile" class="headerlink" title="sendFile"></a>sendFile</h4><p>sendfile系统调用函数，可以直接把内核缓冲区的数据直接拷贝到socket缓冲区中，不再拷贝到用户态。</p>
+<p><strong>sendfile</strong>要求输入的fd必须是文件句柄，不能是socket，输出的fd必须是socket，也就是说，数据的来源必须是从本地的磁盘，而不能是从网络中。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/sendfile.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">ssize_t</span> <span class="title">sendfile</span><span class="params">(<span class="keyword">int</span> out_fd, <span class="keyword">int</span> in_fd, <span class="keyword">off_t</span> *offset, <span class="keyword">size_t</span> count)</span></span></span><br></pre></td></tr></table></figure>
 <p>in_fd 必须指向真实的文件，不能是socket和管道；而out_fd则必须是一个socket。<br>由此可见，sendfile 几乎是专门为在网络上传输文件而设计的。</p>
 <h3 id="数据传输方式-PIO-amp-DMA"><a href="#数据传输方式-PIO-amp-DMA" class="headerlink" title="数据传输方式 PIO &amp; DMA"></a>数据传输方式 PIO &amp; DMA</h3><p>DMA（直接存储器访问）和 PIO（程控输入/输出）。<br>DMA和PIO分别是在电子设备中传输信息的两种方式；在计算机和其他类似设备中更为著名。<br>PIO是一种较老的方法，由于某些优点，在大多数应用中已被DMA取代。</p>
