@@ -347,36 +347,24 @@
 <blockquote>
 <p>上面的三种写回策略体现了一个重要原则：trade-off，取舍，指在性能和可靠性保证之间做取舍。<br>关于AOF的同步策略是涉及到操作系统的 <strong>write 函数</strong>和 <strong>fsync 函数</strong>的，在《Redis设计与实现》中是这样说明的：</p>
 </blockquote>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">为了提高文件写入效率，在现代操作系统中，当用户调用write函数，将一些数据写入文件时，操作系统通常会将数据暂存到一个内存缓冲区里，当缓冲区的空间被填满或超过了指定时限后，才真正将缓冲区的数据写入到磁盘里。</span><br><span class="line"></span><br><span class="line">这样的操作虽然提高了效率，但也为数据写入带来了安全问题：如果计算机停机，内存缓冲区中的数据会丢失。</span><br><span class="line"></span><br><span class="line">为此，系统提供了fsync、fdatasync同步函数，可以强制操作系统立刻将缓冲区中的数据写入到硬盘里，从而确保写入数据的安全性。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">为了提高文件写入效率，在现代操作系统中，当用户调用write函数，将一些数据写入文件时，操作系统通常会将数据暂存到一个内存缓冲区里，当缓冲区的空间被填满或超过了指定时限后，才真正将缓冲区的数据写入到磁盘里。</span><br><span class="line">这样的操作虽然提高了效率，但也为数据写入带来了安全问题：如果计算机停机，内存缓冲区中的数据会丢失。</span><br><span class="line">为此，系统提供了fsync、fdatasync同步函数，可以强制操作系统立刻将缓冲区中的数据写入到硬盘里，从而确保写入数据的安全性。</span><br></pre></td></tr></table></figure>
 <h4 id="redis-conf中配置AOF"><a href="#redis-conf中配置AOF" class="headerlink" title="redis.conf中配置AOF"></a>redis.conf中配置AOF</h4><p>默认情况下，Redis是没有开启AOF的，可以通过配置redis.conf文件来开启AOF持久化，关于AOF的配置如下</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"># appendonly参数开启AOF持久化</span><br><span class="line">appendonly no/yes</span><br><span class="line"># AOF持久化的文件名，默认是appendonly.aof</span><br><span class="line">appendfilename &quot;appendonly.aof&quot;</span><br><span class="line"># AOF文件的保存位置和RDB文件的位置相同，都是通过dir参数设置的</span><br><span class="line">dir ./</span><br><span class="line"></span><br><span class="line"># 同步策略</span><br><span class="line"># appendfsync always</span><br><span class="line">appendfsync everysec</span><br><span class="line"># appendfsync no</span><br><span class="line"></span><br><span class="line"># aof重写期间是否同步</span><br><span class="line">no-appendfsync-on-rewrite no</span><br><span class="line"># 重写触发配置</span><br><span class="line">auto-aof-rewrite-percentage 100</span><br><span class="line">auto-aof-rewrite-min-size 64mb</span><br><span class="line"># 加载aof出错如何处理</span><br><span class="line">aof-load-truncated yes</span><br><span class="line"># 文件重写策略</span><br><span class="line">aof-rewrite-incremental-fsync yes</span><br></pre></td></tr></table></figure>
 
 <h4 id="AOF重写"><a href="#AOF重写" class="headerlink" title="AOF重写"></a>AOF重写</h4><p>AOF会记录每个写命令到AOF文件，随着时间越来越长，AOF文件会变得越来越大。如果不加以控制，会对Redis服务器，甚至对操作系统造成影响，而且AOF文件越大，数据恢复也越慢。<br>为了解决AOF文件体积膨胀的问题，Redis提供<strong>AOF文件重写机制</strong>来对AOF文件进行“瘦身”。</p>
 <p>Redis 提供了 bgrewriteaof 指令用于对 AOF 日志进行瘦身。<br>其原理就是开辟一个子进程<strong>对内存进行遍历转换成一系列 Redis 的操作指令</strong>，序列化到一个新的 AOF 日志文件中。序列化完毕后再将操作期间发生的增量 AOF 日志追加到这个新的 AOF 日志文件中，追加完毕后就立即替代旧的 AOF 日志文件了，瘦身工作就完成了。<br><img src="/2019/09/16/Redis/redis-aof%E9%87%8D%E5%86%99.jpeg"></p>
-<blockquote>
 <p><strong>AOF重写会阻塞吗？</strong><br>AOF重写过程是由后台进程<strong>bgrewriteaof</strong>来完成的。<br>主线程fork出后台的bgrewriteaof子进程，fork会把主线程的内存拷贝一份给bgrewriteaof子进程，这里面就包含了数据库的最新数据。然后，bgrewriteaof子进程就可以在不影响主线程的情况下，逐一把拷贝的数据写成操作，记入重写日志。</p>
-</blockquote>
 <p>所以aof在重写时，在fork进程时是会阻塞住主线程的。</p>
-<blockquote>
 <p><strong>AOF日志何时会重写？</strong><br>有两个配置项控制AOF重写的触发：<br><code>auto-aof-rewrite-min-size</code>：表示运行AOF重写时文件的最小大小，默认为64MB。<br><code>auto-aof-rewrite-percentage</code>：这个值的计算方式是，当前aof文件大小和上一次重写后aof文件大小的差值，再除以上一次重写后aof文件大小。也就是当前aof文件比上一次重写后aof文件的增量大小，和上一次重写后aof文件大小的比值。</p>
-</blockquote>
-<blockquote>
 <p><strong>重写日志时，有新数据写入咋整？</strong><br><img src="/2019/09/16/Redis/redis-aof%E9%87%8D%E5%86%99-%E9%87%8D%E5%86%99%E7%BC%93%E5%86%B2.jpg"></p>
-</blockquote>
-<blockquote>
 <p><strong>主线程fork出子进程时是如何复制内存数据的？</strong><br>fork采用操作系统提供的<strong>写时复制（copy on write）机制</strong>，就是为了避免一次性拷贝大量内存数据给子进程造成阻塞。fork子进程时，子进程时会拷贝父进程的页表，即虚实映射关系（虚拟内存和物理内存的映射索引表），而不会拷贝物理内存。这个拷贝会消耗大量cpu资源，并且拷贝完成前会阻塞主线程，阻塞时间取决于内存中的数据量，数据量越大，则内存页表越大。拷贝完成后，父子进程使用相同的内存地址空间。<br>但主进程是可以有数据写入的，这时候就会拷贝物理内存中的数据。</p>
-</blockquote>
-<blockquote>
 <p><strong>在重写日志整个过程时，主线程有哪些地方会被阻塞？</strong></p>
-</blockquote>
 <ul>
 <li>fork子进程时，需要拷贝虚拟页表，会对主线程阻塞。</li>
 <li>主进程有bigkey写入时，操作系统会创建页面的副本，并拷贝原有的数据，会对主线程阻塞。</li>
 <li>子进程重写日志完成后，主进程追加aof重写缓冲区时可能会对主线程阻塞。</li>
 </ul>
-<blockquote>
 <p><strong>为什么AOF重写不复用原AOF日志？</strong></p>
-</blockquote>
 <ol>
 <li>父子进程写同一个文件会产生竞争问题，影响父进程的性能。</li>
 <li>如果AOF重写过程中失败了，相当于污染了原本的AOF文件，无法做恢复数据使用。</li>
@@ -408,7 +396,9 @@
 <li>EXEC：执行事务中的所有操作命令。</li>
 <li>DISCARD：取消事务，放弃执行事务块中的所有命令。</li>
 <li>WATCH：监视一个或多个key,如果事务在执行前，这个key(或多个key)被其他命令修改，则事务被中断，不会执行事务中的任何命令。</li>
-<li>UNWATCH：取消WATCH对所有key的监视。<h4 id="CAS操作实现乐观锁"><a href="#CAS操作实现乐观锁" class="headerlink" title="CAS操作实现乐观锁"></a>CAS操作实现乐观锁</h4><h4 id="Redis事务执行步骤"><a href="#Redis事务执行步骤" class="headerlink" title="Redis事务执行步骤"></a>Redis事务执行步骤</h4><h3 id="深入理解Redis事务"><a href="#深入理解Redis事务" class="headerlink" title="深入理解Redis事务"></a>深入理解Redis事务</h3><h4 id="为什么Redis不支持回滚"><a href="#为什么Redis不支持回滚" class="headerlink" title="为什么Redis不支持回滚"></a>为什么Redis不支持回滚</h4><h4 id="如何理解Redis与事务的ACID"><a href="#如何理解Redis与事务的ACID" class="headerlink" title="如何理解Redis与事务的ACID"></a>如何理解Redis与事务的ACID</h4></li>
+<li>UNWATCH：取消WATCH对所有key的监视。</li>
+</ul>
+<h4 id="CAS操作实现乐观锁"><a href="#CAS操作实现乐观锁" class="headerlink" title="CAS操作实现乐观锁"></a>CAS操作实现乐观锁</h4><h4 id="Redis事务执行步骤"><a href="#Redis事务执行步骤" class="headerlink" title="Redis事务执行步骤"></a>Redis事务执行步骤</h4><h3 id="深入理解Redis事务"><a href="#深入理解Redis事务" class="headerlink" title="深入理解Redis事务"></a>深入理解Redis事务</h3><h4 id="为什么Redis不支持回滚"><a href="#为什么Redis不支持回滚" class="headerlink" title="为什么Redis不支持回滚"></a>为什么Redis不支持回滚</h4><h4 id="如何理解Redis与事务的ACID"><a href="#如何理解Redis与事务的ACID" class="headerlink" title="如何理解Redis与事务的ACID"></a>如何理解Redis与事务的ACID</h4><ul>
 <li>原子性</li>
 <li>一致性</li>
 <li>隔离性</li>
