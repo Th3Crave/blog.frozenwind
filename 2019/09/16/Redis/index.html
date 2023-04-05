@@ -530,7 +530,8 @@
 <h4 id="最大缓存设置"><a href="#最大缓存设置" class="headerlink" title="最大缓存设置"></a>最大缓存设置</h4><p>建议把缓存容量设置为总数据量的 15% 到 30%，兼顾访问性能和内存空间开销。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># 设置缓存大小为4G</span><br><span class="line">CONFIG SET maxmemory 4gb</span><br></pre></td></tr></table></figure>
 <p>缓存被写满是不可避免的, 所以需要数据淘汰策略。</p>
-<h4 id="缓存淘汰策略"><a href="#缓存淘汰策略" class="headerlink" title="缓存淘汰策略"></a>缓存淘汰策略</h4><ul>
+<h4 id="缓存淘汰策略"><a href="#缓存淘汰策略" class="headerlink" title="缓存淘汰策略"></a>缓存淘汰策略</h4><p><strong>触发条件是Redis使用的内存达到阈值。</strong></p>
+<ul>
 <li>不淘汰 <ul>
 <li>noeviction （v4.0后默认的）</li>
 </ul>
