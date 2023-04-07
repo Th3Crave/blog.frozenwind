@@ -491,7 +491,8 @@
 <li>哨兵集群可以判定主库“主观下线”。<br>  由于<strong>quorum=2</strong>，所以当一个哨兵判断主库“主观下线”后，询问另外一个哨兵后也会得到同样的结果，2个哨兵都判定“主观下线”，达到了quorum的值，因此，哨兵集群可以判定主库为“客观下线”。</li>
 <li>不能完成主从切换。<br>  哨兵标记主库“客观下线后”，在选举“哨兵领导者”时，一个哨兵必须拿到超过多数的选票(5/2+1=3票)。但目前只有2个哨兵活着，无论怎么投票，一个哨兵最多只能拿到2票，永远无法达到N/2+1选票的结果。</li>
 </ul>
-<h2 id="Redis高可扩展-分片技术"><a href="#Redis高可扩展-分片技术" class="headerlink" title="Redis高可扩展 - 分片技术"></a>Redis高可扩展 - 分片技术</h2><h2 id="缓存并发问题"><a href="#缓存并发问题" class="headerlink" title="缓存并发问题"></a>缓存并发问题</h2><h3 id="数据库和缓存一致性"><a href="#数据库和缓存一致性" class="headerlink" title="数据库和缓存一致性"></a>数据库和缓存一致性</h3><blockquote>
+<h2 id="Redis高可扩展-分片技术"><a href="#Redis高可扩展-分片技术" class="headerlink" title="Redis高可扩展 - 分片技术"></a>Redis高可扩展 - 分片技术</h2><p><strong>主从复制</strong>和<strong>哨兵机制</strong>保障了高可用，就读写分离而言，虽然slave节点扩展了主从的读并发能力，但是<strong>写能力</strong>和<strong>存储能力</strong>是无法进行扩展，就只能是master节点能够承载的上限。如果面对海量数据，那么必然需要构建mster（主节点分片）之间的集群，同时必然需要吸收高可用（主从复制和哨兵机制）能力，即每个master分片节点还需要有slave从节点，这是分布式系统中典型的纵向扩展（集群的分片技术）的体现。<br>在Redis 3.0版本中对应的设计就是Redis Cluster。</p>
+<h2 id="缓存并发问题"><a href="#缓存并发问题" class="headerlink" title="缓存并发问题"></a>缓存并发问题</h2><h3 id="数据库和缓存一致性"><a href="#数据库和缓存一致性" class="headerlink" title="数据库和缓存一致性"></a>数据库和缓存一致性</h3><blockquote>
 <p>更新缓存的的Design Pattern有四种：Cache aside, Read through, Write through, Write behind caching</p>
 </blockquote>
 <p>Cache Aside Pattern</p>
