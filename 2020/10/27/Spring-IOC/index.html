@@ -1,0 +1,52 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="人生到处知何似，应似飞鸿踏雪泥。泥上偶然留指爪，鸿飞那复计东西。"><title>Spring-IOC | frozeNwInd</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.0.0"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/normalize/latest/normalize.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/grids-responsive-min.min.css"><link rel="stylesheet" href="//lib.baomitu.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//lib.baomitu.com/jquery/latest/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement('script');
+  hm.src = 'https://hm.baidu.com/hm.js?' + 'bbf19a98c9ae28f2e1e8cfcee1d9585e';
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+  })();</script><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">Spring-IOC</h1><a id="logo" href="/.">frozeNwInd</a><p class="description">吕乘风的博客</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/history/"><i class="fa fa-history"> 历史</i></a><a href="/message/"><i class="fa fa-comment"> 留言</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">Spring-IOC</h1><div class="post-meta">2020-10-27<span> | </span><span class="category"><a href="/categories/technology/">technology</a></span></div><div class="post-content"><h2 id="谈谈对Spring的理解"><a href="#谈谈对Spring的理解" class="headerlink" title="谈谈对Spring的理解"></a>谈谈对Spring的理解</h2><p>Spring是一个轻量级的IoC和AOP容器框架，是为Java应用程序提供基础性服务的一套框架。</p>
+<p>目的是用于简化企业应用程序的开发，它使得开发者只需要关心业务需求。</p>
+<p>轻量级是相对于重量级而言的，轻量级一般就是非侵入式的、所依赖的东西少、资源占用少、部署简单，容易使用。</p>
+<ul>
+<li>Spring Core：核心类库，提供IOC服务；</li>
+<li>Spring Context：提供框架式的Bean访问方式，以及企业级功能（JNDI、定时任务等）；</li>
+<li>Spring AOP：AOP服务；</li>
+<li>Spring DAO：对JDBC的抽象，简化了数据访问异常的处理；</li>
+<li>Spring ORM：对现有的ORM框架的支持；</li>
+<li>Spring Web：提供了基本的面向Web的综合特性，例如多方文件上传；</li>
+<li>Spring MVC：提供面向Web应用的Model-View-Controller实现。</li>
+</ul>
+<h2 id="IOC"><a href="#IOC" class="headerlink" title="IOC"></a>IOC</h2><p>IOC，Inversion of Control就是控制反转，是指创建对象的控制权的转移，以前创建对象的主动权和时机是由自己把控的，而现在这种权力转移到Spring容器中，并由容器根据配置文件去创建实例和管理各个实例之间的依赖关系，对象与对象之间松散耦合，也利于功能的复用。</p>
+<p>DI依赖注入，和控制反转是同一个概念的不同角度的描述，即 应用程序在运行时依赖IoC容器来动态注入对象需要的外部资源。</p>
+<h3 id="IOC的工作原理"><a href="#IOC的工作原理" class="headerlink" title="IOC的工作原理"></a>IOC的工作原理</h3><p>IoC 底层通过工厂模式、Java 的反射机制、XML 解析等技术，将代码的耦合度降低到最低限度，其主要步骤如下。</p>
+<ol>
+<li>在配置文件（例如 Bean.xml）中，对各个对象以及它们之间的依赖关系进行配置；</li>
+<li>我们可以把 IoC 容器当做一个工厂，这个工厂的产品就是 Spring Bean；</li>
+<li>容器启动时会加载并解析这些配置文件，得到对象的基本信息以及它们之间的依赖关系；</li>
+<li>IoC 利用 Java 的反射机制，根据类名生成相应的对象（即 Spring Bean），并根据依赖关系将这个对象注入到依赖它的对象中。</li>
+</ol>
+<p>由于对象的基本信息、对象之间的依赖关系都是在配置文件中定义的，并没有在代码中紧密耦合，因此即使对象发生改变，我们也只需要在配置文件中进行修改即可，而无须对 Java 代码进行修改，这就是 Spring IoC 实现解耦的原理。</p>
+<h3 id="IOC容器"><a href="#IOC容器" class="headerlink" title="IOC容器"></a>IOC容器</h3><p>IoC 思想基于 IoC 容器实现的，IoC 容器底层其实就是一个 Bean 工厂。<br>Spring 框架为我们提供了两种不同类型 IoC 容器，它们分别是 BeanFactory 和 ApplicationContext。</p>
+<h4 id="BeanFactory"><a href="#BeanFactory" class="headerlink" title="BeanFactory"></a>BeanFactory</h4><p>BeanFactory 是 IoC 容器的基本实现，也是 Spring 提供的最简单的 IoC 容器，它提供了 IoC 容器最基本的功能，由 org.springframework.beans.factory.BeanFactory 接口定义。</p>
+<p>BeanFactory 采用懒加载（lazy-load）机制，容器在加载配置文件时并不会立刻创建 Java 对象，只有程序中获取（使用）这个对对象时才会创建。</p>
+<blockquote>
+<p>BeanFactory 是 Spring 内部使用接口，通常情况下不提供给开发人员使用。 </p>
+</blockquote>
+<h4 id="ApplicationContext"><a href="#ApplicationContext" class="headerlink" title="ApplicationContext"></a>ApplicationContext</h4><p>ApplicationContext 是 BeanFactory 接口的子接口，是对 BeanFactory 的扩展。<br>ApplicationContext 在 BeanFactory 的基础上增加了许多企业级的功能，例如 AOP（面向切面编程）、国际化、事务支持等。</p>
+</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="AliPay" qr="/img/AliPayQR.png"></li><li id="WeChat" qr="/img/WeChatQR.png"></li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="tags"><a href="/tags/Spring"><i class="fa fa-tag">Spring</i></a></div><div class="post-nav"><a class="pre" href="/2021/11/21/%E9%9A%8F%E7%AC%94-%E4%BB%8A%E5%A4%A9%E8%B5%B7%E7%9A%84%E6%AF%8F%E6%99%9A-%E4%BD%A0%E8%A6%81%E7%8F%8D%E6%83%9C%E5%B2%81%E6%9C%88/">今天起的每晚 你要珍惜岁月</a><a class="next" href="/2019/11/22/MySQL%E7%B4%A2%E5%BC%95%E5%8E%9F%E7%90%86%E5%8F%8A%E6%85%A2%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96/">MySQL索引原理及慢查询优化</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+  clientID: '8359b7a19b78f2b9e112',
+  clientSecret: '5ad69dc1633a1834322067d017b6313bd231457c',
+  repo: 'gitalk',
+  owner: 'Th3Crave',
+  admin: ['Th3Crave'],
+  id: md5(location.pathname),
+  distractionFreeMode: false
+})
+gitalk.render('container')
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%88%E8%B0%88%E5%AF%B9Spring%E7%9A%84%E7%90%86%E8%A7%A3"><span class="toc-text">谈谈对Spring的理解</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#IOC"><span class="toc-text">IOC</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#IOC%E7%9A%84%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="toc-text">IOC的工作原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IOC%E5%AE%B9%E5%99%A8"><span class="toc-text">IOC容器</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#BeanFactory"><span class="toc-text">BeanFactory</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ApplicationContext"><span class="toc-text">ApplicationContext</span></a></li></ol></li></ol></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+  search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>
