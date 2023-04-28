@@ -4,16 +4,106 @@
   hm.src = 'https://hm.baidu.com/hm.js?' + 'bbf19a98c9ae28f2e1e8cfcee1d9585e';
   var s = document.getElementsByTagName("script")[0];
   s.parentNode.insertBefore(hm, s);
-  })();</script><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">SpringCloud</h1><a id="logo" href="/.">frozeNwInd</a><p class="description">吕乘风的博客</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/history/"><i class="fa fa-history"> 历史</i></a><a href="/message/"><i class="fa fa-comment"> 留言</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">SpringCloud</h1><div class="post-meta">2023-04-27<span> | </span><span class="category"><a href="/categories/technology/">technology</a></span></div><div class="post-content"><p><img src="/2023/04/27/SpringCloud/springcloud-%E6%9E%B6%E6%9E%84%E5%9B%BE.png"></p>
-<ol>
-<li>请求统一通过<strong>API网关</strong>来访问内部服务</li>
-<li><strong>网关</strong>接收到请求后，从<strong>注册中心</strong>获取可用服务</li>
-<li>由Ribbon进行负载均衡后，分发到后端具体实例</li>
-<li>微服务之间通过Feign进行通信处理业务</li>
-<li>Hystrix负责处理服务超时熔断</li>
-<li>Tubine监控服务间的调用和熔断相关指标</li>
-</ol>
-<h2 id="Eureka-服务注册与发现"><a href="#Eureka-服务注册与发现" class="headerlink" title="Eureka 服务注册与发现"></a>Eureka 服务注册与发现</h2><h2 id="Zuul-路由网关"><a href="#Zuul-路由网关" class="headerlink" title="Zuul 路由网关"></a>Zuul 路由网关</h2><h2 id="Ribbon-负载均衡"><a href="#Ribbon-负载均衡" class="headerlink" title="Ribbon 负载均衡"></a>Ribbon 负载均衡</h2><h2 id="Hystrix-服务熔断与降级"><a href="#Hystrix-服务熔断与降级" class="headerlink" title="Hystrix 服务熔断与降级"></a>Hystrix 服务熔断与降级</h2><h2 id="Config-动态配置"><a href="#Config-动态配置" class="headerlink" title="Config 动态配置"></a>Config 动态配置</h2><h2 id="Feign-服务调用"><a href="#Feign-服务调用" class="headerlink" title="Feign 服务调用"></a>Feign 服务调用</h2></div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="AliPay" qr="/img/AliPayQR.png"></li><li id="WeChat" qr="/img/WeChatQR.png"></li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="tags"><a href="/tags/SpringCloud"><i class="fa fa-tag">SpringCloud</i></a></div><div class="post-nav"><a class="pre" href="/2023/04/27/Spring-AOP/">Spring-AOP</a><a class="next" href="/2023/04/26/myBatis-spring/">mybatis-spring</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+  })();</script><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">SpringCloud</h1><a id="logo" href="/.">frozeNwInd</a><p class="description">吕乘风的博客</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/history/"><i class="fa fa-history"> 历史</i></a><a href="/message/"><i class="fa fa-comment"> 留言</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">SpringCloud</h1><div class="post-meta">2023-04-27<span> | </span><span class="category"><a href="/categories/technology/">technology</a></span></div><div class="post-content"><p>Spring Cloud的目标是微服务架构的一站式解决方案。<br>Spring Cloud 可以说是 Spring 社区为微服务架构提供的一个“全家桶”套餐。<br>由于“套餐”中的组件通过一个社区进行包装与整合，使得“套餐”中各个组件之间的配合变得更加和谐，这可以有效减少我们在组件的选型和整合上花费的精力，所以它可以帮助我们快速构建起基础的微服务架构系统。</p>
+<p><a target="_blank" rel="noopener" href="https://spring.io/projects/spring-boot">springboot官网</a><br><a target="_blank" rel="noopener" href="https://spring.io/projects/spring-cloud">springcloud官网</a></p>
+<table>
+<thead>
+<tr>
+<th align="left"></th>
+<th align="left">第一代 Spring Cloud（Netflix，SCN）</th>
+<th align="left">第二代 Spring Cloud（Spring Cloud Alibaba，SCA）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>注册中心</strong></td>
+<td align="left">Netflix Eureka（2.0孵化失败）</td>
+<td align="left">阿里巴巴 Nacos</td>
+</tr>
+<tr>
+<td align="left"><strong>客户端负载均衡</strong></td>
+<td align="left">Netflix Ribbon</td>
+<td align="left">阿里巴巴 Dubbo LB、Spring Cloud Loadbalancer</td>
+</tr>
+<tr>
+<td align="left"><strong>熔断器</strong></td>
+<td align="left">Netflix Hystrix</td>
+<td align="left">阿里巴巴 Sentinel</td>
+</tr>
+<tr>
+<td align="left"><strong>网关</strong></td>
+<td align="left">Netflix Zuul</td>
+<td align="left">官方 Spring Cloud Gateway</td>
+</tr>
+<tr>
+<td align="left"><strong>配置中心</strong></td>
+<td align="left">官方 Spring Cloud Config</td>
+<td align="left">阿里巴巴 Nacos、携程 Apollo</td>
+</tr>
+<tr>
+<td align="left">服务调用</td>
+<td align="left">Netflix Feign</td>
+<td align="left">阿里巴巴 Dubbo RPC</td>
+</tr>
+<tr>
+<td align="left">消息驱动</td>
+<td align="left">官方 Spring Cloud Stream</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left">链路追踪</td>
+<td align="left">官方 Spring Cloud Sleuth/Zipkin</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">阿里巴巴 seata 分布式事务方案</td>
+</tr>
+</tbody></table>
+<h2 id="Spring-Cloud-Netflix"><a href="#Spring-Cloud-Netflix" class="headerlink" title="Spring Cloud Netflix"></a>Spring Cloud Netflix</h2><p>**Spring Cloud Netflix的五大组件(神兽)**：</p>
+<ul>
+<li>Eureka：服务注册和发现，它提供了一个服务注册中心、服务发现的客户端，还有一个方便的查看所有注册的服务的界面。 所有的服务使用Eureka的服务发现客户端来将自己注册到Eureka的服务器上。</li>
+<li>Zuul：网关，所有的客户端请求通过这个网关访问后台的服务。他可以使用一定的路由配置来判断某一个URL由哪个服务来处理。并从Eureka获取注册的服务来转发请求。</li>
+<li>Ribbon：即负载均衡，Zuul网关将一个请求发送给某一个服务的应用的时候，如果一个服务启动了多个实例，就会通过Ribbon来通过一定的负载均衡策略来发送给某一个服务实例。</li>
+<li>Feign：服务客户端，服务之间如果需要相互访问，可以使用RestTemplate，也可以使用Feign客户端访问。它默认会使用Ribbon来实现负载均衡。</li>
+<li>Hystrix：监控和断路器。我们只需要在服务接口上添加Hystrix标签，就可以实现对这个接口的监控和断路器功能。</li>
+</ul>
+<h2 id="Spring-Cloud-Alibaba"><a href="#Spring-Cloud-Alibaba" class="headerlink" title="Spring Cloud Alibaba"></a>Spring Cloud Alibaba</h2><h2 id="停更的组件"><a href="#停更的组件" class="headerlink" title="停更的组件"></a>停更的组件</h2><p><img src="/2023/04/27/SpringCloud/springcloud-stop.png"></p>
+<p><strong>服务注册中心</strong></p>
+<ul>
+<li>Eureka：官方停止更新，并且已经有更好的替代产品了，可以使用，但是官方已经不建议使用了（重度患者）。</li>
+<li>Zookeeper：某些老系统，以前是用的Zookeeper + Dubbo，后来做技术升级，结果发现SpringCloud的Eureka停更了，然后就用了最少的技术切换，那么就用了Zookeeper做注册中心。</li>
+<li>Consul：go语言开发的，也是一个优秀的服务注册框架，但是使用量较少，风头都被Nacos抢了。</li>
+<li>Nacos：来自于SpringCloudAlibaba，在企业中经过了百万级注册考验的，不但可以完美替换Eureka，还能做其他组件的替换，所以强烈建议使用，是学习的重点。</li>
+</ul>
+<p><strong>服务调用</strong></p>
+<ul>
+<li>Ribbon：也进入了维护状态，停止更新了，但是Spring官方还在使用（轻度患者）。</li>
+<li>LoadBalancer：Spring官方推出的一个新的组件，打算逐渐取代掉Ribbon。</li>
+</ul>
+<p><strong>服务调用2</strong></p>
+<ul>
+<li>Feign：Netflix 公司产品，也停止更新了。</li>
+<li>OpenFeign：Spring社区等不了Netflix更新了，然后就自己做了一个组件，不用Feign了。</li>
+</ul>
+<p><strong>服务降级</strong></p>
+<ul>
+<li>Hystrix：官网不推荐使用，但是中国企业中还在大规模使用。</li>
+<li>Resilience4J：官网推荐使用，但是国内很少用这个。</li>
+<li>Sentienl：来自于SpringCloudAlibaba，在中国企业替换Hystrix的组件，国内强烈建议使用。</li>
+</ul>
+<p><strong>服务网关</strong></p>
+<ul>
+<li>Zuul：Netflix 公司产品，公司内部产生分歧，有的人想自己出一个Zuul2。</li>
+<li>Zuul2：也是Netflix 公司准备出的产品，但是由于内部分歧，所以Zuul2已经胎死腹中了。</li>
+<li>gateway：Spring社区自己出的网关组件，官方隆重介绍和极度推荐的网关服务组件。</li>
+</ul>
+<p><strong>服务配置</strong></p>
+<ul>
+<li>Config：目前也在使用，风头被Nacos抢了。</li>
+<li>Nacos：来自于SpringCloudAlibaba，后来居上，把Config给替换了。</li>
+</ul>
+</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="AliPay" qr="/img/AliPayQR.png"></li><li id="WeChat" qr="/img/WeChatQR.png"></li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="tags"><a href="/tags/SpringCloud"><i class="fa fa-tag">SpringCloud</i></a></div><div class="post-nav"><a class="next" href="/2023/04/26/myBatis-spring/">mybatis-spring</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
   clientID: '8359b7a19b78f2b9e112',
   clientSecret: '5ad69dc1633a1834322067d017b6313bd231457c',
   repo: 'gitalk',
@@ -23,7 +113,7 @@
   distractionFreeMode: false
 })
 gitalk.render('container')
-</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Eureka-%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%8E%E5%8F%91%E7%8E%B0"><span class="toc-text">Eureka 服务注册与发现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Zuul-%E8%B7%AF%E7%94%B1%E7%BD%91%E5%85%B3"><span class="toc-text">Zuul 路由网关</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Ribbon-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="toc-text">Ribbon 负载均衡</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Hystrix-%E6%9C%8D%E5%8A%A1%E7%86%94%E6%96%AD%E4%B8%8E%E9%99%8D%E7%BA%A7"><span class="toc-text">Hystrix 服务熔断与降级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Config-%E5%8A%A8%E6%80%81%E9%85%8D%E7%BD%AE"><span class="toc-text">Config 动态配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Feign-%E6%9C%8D%E5%8A%A1%E8%B0%83%E7%94%A8"><span class="toc-text">Feign 服务调用</span></a></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Spring-Cloud-Netflix"><span class="toc-text">Spring Cloud Netflix</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Spring-Cloud-Alibaba"><span class="toc-text">Spring Cloud Alibaba</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%81%9C%E6%9B%B4%E7%9A%84%E7%BB%84%E4%BB%B6"><span class="toc-text">停更的组件</span></a></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
 if (search_path.length == 0) {
   search_path = 'search.xml';
 }
