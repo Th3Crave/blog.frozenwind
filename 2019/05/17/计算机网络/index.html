@@ -6,12 +6,20 @@
   s.parentNode.insertBefore(hm, s);
   })();</script><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">计算机网络</h1><a id="logo" href="/.">frozeNwInd</a><p class="description">吕乘风的博客</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/history/"><i class="fa fa-history"> 历史</i></a><a href="/message/"><i class="fa fa-comment"> 留言</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">计算机网络</h1><div class="post-meta">2019-05-17<span> | </span><span class="category"><a href="/categories/technology/">technology</a></span></div><div class="post-content"><h2 id="在浏览器中输入一个网址，按下回车后，发生了什么？"><a href="#在浏览器中输入一个网址，按下回车后，发生了什么？" class="headerlink" title="在浏览器中输入一个网址，按下回车后，发生了什么？"></a>在浏览器中输入一个网址，按下回车后，发生了什么？</h2><p><img src="httpqingqiu.png"></p>
 <ol>
-<li><strong>域名解析</strong><br> 浏览器通过浏览器缓存、系统缓存、路由器缓存、域名服务器搜索该域名的ip地址。</li>
-<li><strong>发起TCP3次握手，建立TCP连接</strong><br> 拿到域名对应的IP地址之后，User-Agent（一般是指浏览器）会以一个随机端口（1024 &lt; 端口 &lt; 65535）向服务器的WEB程序的80端口发起TCP的连接请求。这个连接请求（原始的http请求经过TCP/IP4层模型的层层封包）到达服务器端后（这中间通过各种路由设备，局域网内除外），进入到网卡，然后是进入到内核的TCP/IP协议栈（用于识别该连接请求，解封包，一层一层的剥开），还有可能要经过Netfilter防火墙（属于内核的模块）的过滤，最终到达WEB程序，最终建立了TCP/IP的连接。<br>为什么HTTP协议要基于TCP来实现？<br>目前在Internet中所有的传输都是通过TCP/IP进行的，HTTP协议作为TCP/IP模型中应用层的协议也不例外，TCP是一个端到端的可靠的面向连接的协议，所以HTTP基于传输层TCP协议不用担心数据的传输的各种问题。</li>
-<li><strong>建立TCP连接后发起HTTP请求</strong><br><img src="httpqingqiubaowen.jpg"></li>
-<li><strong>服务器端响应http请求，浏览器得到html代码</strong><br> 服务器端WEB程序接收到http请求以后，就开始处理该请求，处理之后就返回给浏览器html文件。</li>
-<li><strong>浏览器解析html代码，并请求html代码中的资源</strong><br> 浏览器拿到html文件后，就开始解析其中的html代码，遇到js/css/image等静态资源时，就向服务器端去请求下载（会使用多线程下载，每个浏览器的线程数不一样），这个时候就用上keep-alive特性了，建立一次HTTP连接，可以请求多个资源，下载资源的顺序就是按照代码里的顺序，但是由于每个资源大小不一样，而浏览器又多线程请求请求资源，所以请求成功显示的顺序并不一定是代码里面的顺序。<br>浏览器在请求静态资源时（在未过期的情况下），向服务器端发起一个http请求（询问自从上一次修改时间到现在有没有对资源进行修改），如果服务器端返回304状态码（告诉浏览器服务器端没有修改），那么浏览器会直接读取本地的该资源的缓存文件。</li>
-<li><strong>浏览器对页面进行渲染呈现给用户</strong><br> 浏览器利用自己内部的工作机制，把请求到的静态资源和html代码进行渲染，渲染之后呈现给用户。</li>
+<li><p><strong>域名解析</strong><br> 浏览器通过浏览器缓存、系统缓存、路由器缓存、域名服务器搜索该域名的ip地址。</p>
+</li>
+<li><p><strong>发起TCP3次握手，建立TCP连接</strong><br> 拿到域名对应的IP地址之后，User-Agent（一般是指浏览器）会以一个随机端口（1024 &lt; 端口 &lt; 65535）向服务器的WEB程序的80端口发起TCP的连接请求。这个连接请求（原始的http请求经过TCP/IP4层模型的层层封包）到达服务器端后（这中间通过各种路由设备，局域网内除外），进入到网卡，然后是进入到内核的TCP/IP协议栈（用于识别该连接请求，解封包，一层一层的剥开），还有可能要经过Netfilter防火墙（属于内核的模块）的过滤，最终到达WEB程序，最终建立了TCP/IP的连接。</p>
+<p> 为什么HTTP协议要基于TCP来实现？<br> 目前在Internet中所有的传输都是通过TCP/IP进行的，HTTP协议作为TCP/IP模型中应用层的协议也不例外，TCP是一个端到端的可靠的面向连接的协议，所以HTTP基于传输层TCP协议不用担心数据的传输的各种问题。</p>
+</li>
+<li><p><strong>建立TCP连接后发起HTTP请求</strong><br><img src="httpqingqiubaowen.jpg"></p>
+</li>
+<li><p><strong>服务器端响应http请求，浏览器得到html代码</strong><br> 服务器端WEB程序接收到http请求以后，就开始处理该请求，处理之后就返回给浏览器html文件。</p>
+</li>
+<li><p><strong>浏览器解析html代码，并请求html代码中的资源</strong><br> 浏览器拿到html文件后，就开始解析其中的html代码，遇到js/css/image等静态资源时，就向服务器端去请求下载（会使用多线程下载，每个浏览器的线程数不一样），这个时候就用上keep-alive特性了，建立一次HTTP连接，可以请求多个资源，下载资源的顺序就是按照代码里的顺序，但是由于每个资源大小不一样，而浏览器又多线程请求请求资源，所以请求成功显示的顺序并不一定是代码里面的顺序。</p>
+<p> 浏览器在请求静态资源时（在未过期的情况下），向服务器端发起一个http请求（询问自从上一次修改时间到现在有没有对资源进行修改），如果服务器端返回304状态码（告诉浏览器服务器端没有修改），那么浏览器会直接读取本地的该资源的缓存文件。</p>
+</li>
+<li><p><strong>浏览器对页面进行渲染呈现给用户</strong><br> 浏览器利用自己内部的工作机制，把请求到的静态资源和html代码进行渲染，渲染之后呈现给用户。</p>
+</li>
 </ol>
 <h2 id="OSI七层网络模型"><a href="#OSI七层网络模型" class="headerlink" title="OSI七层网络模型"></a>OSI七层网络模型</h2><p><img src="/2019/05/17/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B.png"></p>
 <h2 id="物理层和数据链路层"><a href="#物理层和数据链路层" class="headerlink" title="物理层和数据链路层"></a>物理层和数据链路层</h2><h2 id="网络层"><a href="#网络层" class="headerlink" title="网络层"></a>网络层</h2><p>IP ICMP ARP RARP AKP UUCP</p>
