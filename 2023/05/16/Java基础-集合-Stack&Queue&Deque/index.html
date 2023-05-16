@@ -1,0 +1,94 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="人生到处知何似，应似飞鸿踏雪泥。泥上偶然留指爪，鸿飞那复计东西。"><title>Java Collection - Stack &amp; Queue &amp; Deque | frozeNwInd</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.0.0"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/normalize/latest/normalize.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/grids-responsive-min.min.css"><link rel="stylesheet" href="//lib.baomitu.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//lib.baomitu.com/jquery/latest/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement('script');
+  hm.src = 'https://hm.baidu.com/hm.js?' + 'bbf19a98c9ae28f2e1e8cfcee1d9585e';
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+  })();</script><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">Java Collection - Stack &amp; Queue &amp; Deque</h1><a id="logo" href="/.">frozeNwInd</a><p class="description">吕乘风的博客</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/history/"><i class="fa fa-history"> 历史</i></a><a href="/message/"><i class="fa fa-comment"> 留言</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">Java Collection - Stack &amp; Queue &amp; Deque</h1><div class="post-meta">2023-05-16<span> | </span><span class="category"><a href="/categories/technology/">technology</a></span></div><div class="post-content"><h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>Java里有一个叫做Stack的类，却没有叫做Queue的类(它是个接口名字)。</p>
+<p>当需要使用栈时，Java已不推荐使用Stack，而是推荐使用更高效的ArrayDeque；<br>既然Queue只是一个接口，当需要使用队列时也就首选ArrayDeque了(次选是LinkedList)。</p>
+<p><strong>为什么Stack被弃用</strong><br>Java 中的 Stack 实现，是被业界一直认为非常糟糕的实现。<br>实际上，它犯了面向对象设计领域的一个基本错误：Stack 和 Vector 之间的关系，不应该是继承关系，而应该是组合关系（composition）。</p>
+<h2 id="Queue"><a href="#Queue" class="headerlink" title="Queue"></a>Queue</h2><p>Queue接口继承自Collection接口，除了最基本的Collection的方法之外，它还支持额外的insertion, extraction和inspection操作。<br>这里有两组格式，共6个方法，一组是抛出异常的实现；另外一组是返回值的实现(没有则返回null)。</p>
+<table>
+<thead>
+<tr>
+<th align="left"></th>
+<th align="left">Throws exception</th>
+<th align="left">Returns special value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Insert</td>
+<td align="left">add(e)</td>
+<td align="left">offer(e)</td>
+</tr>
+<tr>
+<td align="left">Remove</td>
+<td align="left">remove()</td>
+<td align="left">poll()</td>
+</tr>
+<tr>
+<td align="left">Examine</td>
+<td align="left">element()</td>
+<td align="left">peek()</td>
+</tr>
+</tbody></table>
+<h2 id="Deque"><a href="#Deque" class="headerlink" title="Deque"></a>Deque</h2><p><code>Deque</code>是”double ended queue”，表示双向的队列，英文读作”deck”。<br>Deque 继承自 Queue接口，除了支持Queue的方法之外，还支持insert，remove和examine操作。<br>由于Deque是双向的，所以可以对队列的头和尾都进行操作，它同时也支持两组格式，一组是抛出异常的实现；另外一组是返回值的实现(没有则返回null)。</p>
+<table>
+<thead>
+<tr>
+<th align="left"></th>
+<th align="left">First Element - Head</th>
+<th align="left"></th>
+<th align="left">Last Element - Tail</th>
+<th align="left"></th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"></td>
+<td align="left">Throws exception</td>
+<td align="left">Special value</td>
+<td align="left">Throws exception</td>
+<td align="left">Special value</td>
+</tr>
+<tr>
+<td align="left">Insert</td>
+<td align="left">addFirst(e)</td>
+<td align="left">offerFirst(e)</td>
+<td align="left">addLast(e)</td>
+<td align="left">offerLast(e)</td>
+</tr>
+<tr>
+<td align="left">Remove</td>
+<td align="left">removeFirst()</td>
+<td align="left">pollFirst()</td>
+<td align="left">removeLast()</td>
+<td align="left">pollLast()</td>
+</tr>
+<tr>
+<td align="left">Examine</td>
+<td align="left">getFirst()</td>
+<td align="left">peekFirst()</td>
+<td align="left">getLast()</td>
+<td align="left">peekLast()</td>
+</tr>
+</tbody></table>
+<h3 id="ArrayDeque"><a href="#ArrayDeque" class="headerlink" title="ArrayDeque"></a>ArrayDeque</h3><p><code>ArrayDeque</code>和<code>LinkedList</code>是<code>Deque</code>的两个通用实现，官方更推荐使用<code>AarryDeque</code>用作栈和队列。</p>
+<p>从名字可以看出ArrayDeque底层通过数组实现，为了满足可以同时在数组两端插入或删除元素的需求，该数组还必须是循环的，即循环数组(circular array)，也就是说数组的任何一点都可能被看作起点或者终点。<br>ArrayDeque是非线程安全的(not thread-safe)，当多个线程同时使用的时候，需要程序员手动同步；另外，该容器不允许放入null元素。</p>
+<p><img src="/2023/05/16/Java%E5%9F%BA%E7%A1%80-%E9%9B%86%E5%90%88-Stack&Queue&Deque/ArrayDeque-%E7%BB%93%E6%9E%84.png"><br>head指向首端第一个有效元素，tail指向尾端第一个可以插入元素的空位。因为是循环数组，所以head不一定总等于0，tail也不一定总是比head大。</p>
+</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="AliPay" qr="/img/AliPayQR.png"></li><li id="WeChat" qr="/img/WeChatQR.png"></li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="tags"><a href="/tags/Java"><i class="fa fa-tag">Java</i></a></div><div class="post-nav"><a class="pre" href="/2023/05/16/Java%E5%9F%BA%E7%A1%80-%E9%9B%86%E5%90%88-PriorityQueue/">Java-基础-集合-PriorityQueue</a><a class="next" href="/2023/05/15/JVM-GC-%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/">JVM-GC-垃圾回收基础知识</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+  clientID: '8359b7a19b78f2b9e112',
+  clientSecret: '5ad69dc1633a1834322067d017b6313bd231457c',
+  repo: 'gitalk',
+  owner: 'Th3Crave',
+  admin: ['Th3Crave'],
+  id: md5(location.pathname),
+  distractionFreeMode: false
+})
+gitalk.render('container')
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Queue"><span class="toc-text">Queue</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Deque"><span class="toc-text">Deque</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ArrayDeque"><span class="toc-text">ArrayDeque</span></a></li></ol></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+  search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>
