@@ -17,6 +17,7 @@
 <li>Executors: 线程池</li>
 </ul>
 <h2 id="Lock框架和Tools类"><a href="#Lock框架和Tools类" class="headerlink" title="Lock框架和Tools类"></a>Lock框架和Tools类</h2><h3 id="类结构概览"><a href="#类结构概览" class="headerlink" title="类结构概览"></a>类结构概览</h3><p><img src="/2023/05/07/Java%E5%B9%B6%E5%8F%91%E5%92%8C%E5%A4%9A%E7%BA%BF%E7%A8%8B-JUC-%E7%B1%BB%E6%B1%87%E6%80%BB/juc-overview-lock.png"></p>
+<p><img src="/2023/05/07/Java%E5%B9%B6%E5%8F%91%E5%92%8C%E5%A4%9A%E7%BA%BF%E7%A8%8B-JUC-%E7%B1%BB%E6%B1%87%E6%80%BB/AQS%E7%9B%B8%E5%85%B3%E7%B1%BB.png"></p>
 <h3 id="接口-Condition"><a href="#接口-Condition" class="headerlink" title="接口: Condition"></a>接口: Condition</h3><p>Condition为接口类型，它将 Object 监视器方法(wait、notify 和 notifyAll)分解成截然不同的对象，以便通过将这些对象与任意 Lock 实现组合使用，为每个对象提供多个等待 set (wait-set)。其中，Lock 替代了 synchronized 方法和语句的使用，Condition 替代了 Object 监视器方法的使用。可以通过await(),signal()来休眠/唤醒线程。</p>
 <h3 id="接口-Lock"><a href="#接口-Lock" class="headerlink" title="接口: Lock"></a>接口: Lock</h3><p>Lock为接口类型，Lock实现提供了比使用synchronized方法和语句可获得的更广泛的锁定操作。此实现允许更灵活的结构，可以具有差别很大的属性，可以支持多个相关的Condition对象。</p>
 <h3 id="接口-ReadWriteLock"><a href="#接口-ReadWriteLock" class="headerlink" title="接口: ReadWriteLock"></a>接口: ReadWriteLock</h3><p>ReadWriteLock为接口类型， 维护了一对相关的锁，一个用于只读操作，另一个用于写入操作。只要没有 writer，读取锁可以由多个 reader 线程同时保持。写入锁是独占的。</p>
