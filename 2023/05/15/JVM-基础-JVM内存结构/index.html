@@ -4,8 +4,218 @@
   hm.src = 'https://hm.baidu.com/hm.js?' + 'bbf19a98c9ae28f2e1e8cfcee1d9585e';
   var s = document.getElementsByTagName("script")[0];
   s.parentNode.insertBefore(hm, s);
-  })();</script><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">JVM-基础-JVM内存结构</h1><a id="logo" href="/.">frozeNwInd</a><p class="description">吕乘风的博客</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/history/"><i class="fa fa-history"> 历史</i></a><a href="/message/"><i class="fa fa-comment"> 留言</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">JVM-基础-JVM内存结构</h1><div class="post-meta">2023-05-15<span> | </span><span class="category"><a href="/categories/technology/">technology</a></span></div><div class="post-content"><p><img src="/2023/05/15/JVM-%E5%9F%BA%E7%A1%80-JVM%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/JVM%E8%BF%90%E8%A1%8C%E6%97%B6%E6%95%B0%E6%8D%AE%E5%8C%BA%E5%9F%9F.jpg"></p>
+  })();</script><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">JVM-基础-JVM内存结构</h1><a id="logo" href="/.">frozeNwInd</a><p class="description">吕乘风的博客</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/history/"><i class="fa fa-history"> 历史</i></a><a href="/message/"><i class="fa fa-comment"> 留言</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">JVM-基础-JVM内存结构</h1><div class="post-meta">2023-05-15<span> | </span><span class="category"><a href="/categories/technology/">technology</a></span></div><div class="post-content"><p><img src="/2023/05/15/JVM-%E5%9F%BA%E7%A1%80-JVM%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/JVM%E8%BF%90%E8%A1%8C%E6%97%B6%E6%95%B0%E6%8D%AE%E5%8C%BA%E5%9F%9F-%E7%9F%A5%E8%AF%86%E7%82%B9.jpg"></p>
 <p><a target="_blank" rel="noopener" href="https://www.pdai.tech/md/java/jvm/java-jvm-struct.html">https://www.pdai.tech/md/java/jvm/java-jvm-struct.html</a></p>
+<h2 id="运行时数据区域总览"><a href="#运行时数据区域总览" class="headerlink" title="运行时数据区域总览"></a>运行时数据区域总览</h2><p>内存是非常重要的系统资源，是硬盘和 CPU 的中间仓库及桥梁，承载着操作系统和应用程序的实时运行。<br>JVM 内存布局规定了 Java 在运行过程中内存申请、分配、管理的策略，保证了 JVM 的高效稳定运行。不同的 JVM 对于内存的划分方式和管理机制存在着部分差异。</p>
+<p>下图是 JVM 整体架构，中间部分就是 Java 虚拟机定义的各种运行时数据区域。<br><img src="/2023/05/15/JVM-%E5%9F%BA%E7%A1%80-JVM%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/JVM%E8%BF%90%E8%A1%8C%E6%97%B6%E6%95%B0%E6%8D%AE%E5%8C%BA%E5%9F%9F-JVM%E6%9E%B6%E6%9E%84%E5%9B%BE%E7%A4%BA.jpg"></p>
+<p>Java 虚拟机定义了若干种程序运行期间会使用到的运行时数据区，其中有一些会随着虚拟机启动而创建，随着虚拟机退出而销毁。另外一些则是与线程一一对应的，这些与线程一一对应的数据区域会随着线程开始和结束而创建和销毁。</p>
+<ul>
+<li><strong>线程私有</strong>：程序计数器、虚拟机栈、本地方法栈</li>
+<li><strong>线程共享</strong>：堆、方法区、堆外内存（<strong>Java7的永久代</strong>或<strong>JDK8的元空间、代码缓存</strong>）</li>
+</ul>
+<blockquote>
+<p>栈是运行时的单位，而堆是存储的单位。<br>栈解决程序的运行问题，即程序如何执行，或者说如何处理数据。堆解决的是数据存储的问题，即数据怎么放、放在哪。</p>
+</blockquote>
+<h2 id="一、程序计数器"><a href="#一、程序计数器" class="headerlink" title="一、程序计数器"></a>一、程序计数器</h2><p>程序计数寄存器（Program Counter Register），Register的命名源于CPU的寄存器，寄存器存储指令相关的线程信息，CPU只有把数据装载到寄存器才能够运行。<br>这里，并非是广义上所指的物理寄存器，叫程序计数器（或PC计数器或指令计数器）会更加贴切，并且也不容易引起一些不必要的误会。<strong>JVM中的PC寄存器是对物理PC寄存器的一种抽象模拟。</strong></p>
+<p><strong>程序计数器</strong>是一块较小的内存空间，可以看作是<strong>当前线程所执行的字节码的行号指示器</strong>。</p>
+<h3 id="作用"><a href="#作用" class="headerlink" title="作用"></a>作用</h3><p>PC寄存器用来存储指向下一条指令的地址，即将要执行的指令代码，由执行引擎读取下一条指令。</p>
+<p><img src="/2023/05/15/JVM-%E5%9F%BA%E7%A1%80-JVM%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/%E7%A8%8B%E5%BA%8F%E8%AE%A1%E6%95%B0%E5%99%A8-%E5%9B%BE%E7%A4%BA.jpg"><br>（分析：进入class文件所在目录，执行 <code>javap -v xx.class</code> 反解析（或者通过 IDEA 插件 <code>Jclasslib</code> 直接查看，上图），可以看到当前类对应的Code区（汇编指令）、本地变量表、异常表和代码行偏移量映射表、常量池等信息。）</p>
+<h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>通过下面两个问题，理解下PC计数器。</p>
+<ol>
+<li><p><strong>使用PC寄存器存储字节码指令地址有什么用呢？为什么使用PC寄存器记录当前现成的执行地址呢？</strong><br> 因为CPU需要不停的切换各个线程，这时候切换回来以后，需要知道接着从哪条指令开始继续执行。<br> JVM的字节码解释器就需要通过改变PC寄存器的值来明确下一条应该执行什么样的字节码指令。</p>
+</li>
+<li><p><strong>PC寄存器为什么会被设定为线程私有的？</strong><br> 多线程在一个特定的时间段内只会执行其中某一个线程方法，CPU会不停地做时间片切换，这样必然会导致频繁的中断或恢复。<br> 为了能够准确的记录各个线程正在执行的当前字节码指令地址，所以为每个线程都分配了一个PC寄存器，每个线程都独立计算，不会互相影响。</p>
+</li>
+</ol>
+<p>相关总结如下：</p>
+<ul>
+<li>它是一块很小的内存空间，几乎可以忽略不计。也是运行速度最快的存储区域</li>
+<li>在 JVM 规范中，每个线程都有它自己的程序计数器，是线程私有的，生命周期与线程的生命周期一致</li>
+<li>任何时间一个线程都只有一个方法在执行，也就是所谓的<strong>当前方法</strong>。如果当前线程正在执行的是 Java 方法，程序计数器记录的是 JVM 字节码指令地址，如果是执行 native 方法，则是未指定值（undefined）</li>
+<li>它是程序控制流的指示器，分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成</li>
+<li>字节码解释器工作时就是通过改变这个计数器的值来选取下一条需要执行的字节码指令</li>
+<li><strong>它是唯一一个在 JVM 规范中没有规定任何 OutOfMemoryError 情况的区域</strong></li>
+</ul>
+<h2 id="二、虚拟机栈"><a href="#二、虚拟机栈" class="headerlink" title="二、虚拟机栈"></a>二、虚拟机栈</h2><h3 id="概述-1"><a href="#概述-1" class="headerlink" title="概述"></a>概述</h3><p>Java 虚拟机栈(Java Virtual Machine Stacks)，早期也叫 Java 栈。<br>每个线程在创建的时候都会创建一个虚拟机栈，其内部保存一个个的栈帧(Stack Frame)，对应着一次次 Java 方法调用；是线程私有的，生命周期和线程一致。</p>
+<p><strong>作用</strong>：主管Java程序的运行，虚拟机栈保存方法的局部变量、部分结果，并参与方法的调用和返回。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>虚拟机栈是一种快速有效的分配存储方式，访问速度仅次于程序计数器</li>
+<li>JVM直接对虚拟机栈的操作只有两个：<strong>每个方法执行伴随着入栈(进栈/压栈)<strong>，</strong>方法执行结束出栈</strong></li>
+<li><strong>栈不存在垃圾回收问题</strong></li>
+</ul>
+<p><strong>栈中可能出现的异常</strong>：<br>JVM虚拟机规范允许虚拟机栈的大小是动态的或者是固定不变的。</p>
+<ul>
+<li>如果采用<strong>固定大小</strong>的Java虚拟机栈<br>  固定大小时，每个线程的虚拟机栈的容器可以在线程创建的时候独立选定。如果线程请求分配的栈容量超过Java虚拟机栈允许的最大容量，JVM将会抛出<strong>StackOverflowError</strong>异常。</li>
+<li>如果允许Java虚拟机栈<strong>动态扩展</strong><br>  允许动态扩展时，若线程在尝试扩展的时候无法申请到足够的内存，或者在创建新的线程时没有足够的内存去创建对应的虚拟机栈，JVM将会抛出<strong>OutOfMemoryError</strong>异常。</li>
+</ul>
+<p>可以通过参数<code>-Xss</code>来设置线程的最大栈空间，栈的大小直接决定了函数调用的最大可达深度。</p>
+<h3 id="栈的存储单位"><a href="#栈的存储单位" class="headerlink" title="栈的存储单位"></a>栈的存储单位</h3><p>栈中存储什么？</p>
+<ul>
+<li>每个线程都有自己的栈，栈中的数据都是以**栈帧(Stack Frame)**的格式存在</li>
+<li>在这个线程上，正在执行的每个方法都各自有应对的一个栈帧</li>
+<li>栈帧是一个内存区块，是一个数据集，维系着方法执行过程中的各种数据信息</li>
+</ul>
+<h3 id="栈运行原理"><a href="#栈运行原理" class="headerlink" title="栈运行原理"></a>栈运行原理</h3><ol>
+<li>JVM 直接对 Java 栈的操作只有两个，对栈帧的<strong>压栈和出栈</strong>，遵循“先进后出/后进先出”原则</li>
+<li>在一条活动线程中，一个时间点上，只会有一个活动的栈帧。<br> 即只有当前正在执行的方法的栈帧（<strong>栈顶栈帧</strong>）是有效的，这个栈帧被称为<strong>当前栈帧</strong>（Current Frame），与当前栈帧对应的方法就是<strong>当前方法</strong>（Current Method），定义这个方法的类就是<strong>当前类</strong>（Current Class）</li>
+<li>执行引擎运行的所有字节码指令只针对当前栈帧进行操作</li>
+<li>如果在该方法中调用了其他方法，对应的新的栈帧会被创建出来，放在栈的顶端，称为新的当前栈帧</li>
+<li>不同线程中所包含的栈帧是不允许存在相互引用的，即不可能在一个栈帧中引用另外一个线程的栈帧、</li>
+<li>如果当前方法调用了其他方法，方法返回之际，当前栈帧会传回此方法的执行结果给前一个栈帧，接着，虚拟机会丢弃当前栈帧，使得前一个栈帧重新成为当前栈帧</li>
+<li>Java 方法有两种返回函数的方式，<strong>一种是正常的函数返回，使用 return 指令，另一种是抛出异常，不管用哪种方式，都会导致栈帧被弹出</strong></li>
+</ol>
+<p>IDEA 在 debug 时候，可以在 debug 窗口看到 Frames 中各种方法的压栈和出栈情况。<br><img src="/2023/05/15/JVM-%E5%9F%BA%E7%A1%80-JVM%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88-%E6%A0%88%E5%B8%A7-debug.jpg"></p>
+<h3 id="栈帧的内部结构"><a href="#栈帧的内部结构" class="headerlink" title="栈帧的内部结构"></a>栈帧的内部结构</h3><p>每个<strong>栈帧（Stack Frame）</strong>中存储着：</p>
+<ul>
+<li>局部变量表（Local Variables）</li>
+<li>操作数栈（Operand Stack）(或称为表达式栈)</li>
+<li>动态链接（Dynamic Linking）：指向运行时常量池的方法引用</li>
+<li>方法返回地址（Return Address）：方法正常退出或异常退出的地址</li>
+<li>附加信息</li>
+</ul>
+<p><img src="/2023/05/15/JVM-%E5%9F%BA%E7%A1%80-JVM%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88-%E6%A0%88%E5%B8%A7-%E5%86%85%E9%83%A8%E7%BB%93%E6%9E%84.jpg"></p>
+<h4 id="局部变量表"><a href="#局部变量表" class="headerlink" title="局部变量表"></a>局部变量表</h4><p>局部变量表也被称为局部变量数组或者本地变量表，是一组变量值存储空间，主要用于存储<strong>方法参数</strong>和<strong>定义在方法体内的局部变量</strong>，包括编译器可知的各种 Java 虚拟机<strong>基本数据类型</strong>（boolean、byte、char、short、int、float、long、double）、<strong>对象引用</strong>（reference类型，它并不等同于对象本身，可能是一个指向对象起始地址的引用指针，也可能是指向一个代表对象的句柄或其他与此相关的位置）和 <strong>returnAddress</strong> 类型（指向了一条字节码指令的地址，已被异常表取代）。</p>
+<p>由于局部变量表是建立在线程的栈上，是线程的私有数据，因此<strong>不存在数据安全问题</strong>。</p>
+<p><strong>局部变量表所需要的容量大小是编译期确定下来的</strong>，并保存在方法的 Code 属性的 <code>maximum local variables</code> 数据项中。在方法运行期间是不会改变局部变量表的大小的。</p>
+<p><strong>局部变量表中的变量只在当前方法调用中有效</strong>。在方法执行时，虚拟机通过使用局部变量表完成参数值到参数变量列表的传递过程。当方法调用结束后，随着方法栈帧的销毁，局部变量表也会随之销毁。</p>
+<p>参数值的存放总是在局部变量数组的 index0 开始，到数组长度 -1 的索引结束。</p>
+<h5 id="槽-Slot"><a href="#槽-Slot" class="headerlink" title="槽 Slot"></a>槽 Slot</h5><p>局部变量表最基本的存储单元是 Slot（变量槽）。</p>
+<p>在局部变量表中，32 位以内的类型只占用一个 Slot(包括returnAddress类型)，64 位的类型（long和double）占用两个连续的 Slot</p>
+<ul>
+<li>byte(1B)、short(2B)、char(2B) 在存储前被转换为int，boolean也被转换为int，0 表示 false，非 0 表示 true</li>
+<li>long 和 double 则占据两个 Slot</li>
+</ul>
+<p>JVM 会为局部变量表中的每一个 Slot 都分配一个访问索引，通过这个索引即可成功访问到局部变量表中指定的局部变量值，索引值的范围从 0 开始到局部变量表最大的 Slot 数量。</p>
+<p>当一个实例方法被调用的时候，它的方法参数和方法体内部定义的局部变量将会<strong>按照顺序被复制</strong>到局部变量表中的每一个 Slot 上。</p>
+<p>如果需要访问局部变量表中一个 64bit 的局部变量值时，只需要使用前一个索引即可。（比如：访问 long 或 double 类型变量，不允许采用任何方式单独访问其中的某一个 Slot）。</p>
+<p>如果当前帧是由构造方法或实例方法创建的，那么该对象引用 this 将会存放在 index 为 0 的 Slot 处，其余的参数按照参数表顺序继续排列（这里就引出一个问题：<strong>静态方法中为什么不可以引用 this，就是因为this 变量不存在于当前静态方法的局部变量表中</strong>）。</p>
+<p>栈帧中的局部变量表中的槽位是可以重用的，如果一个局部变量过了其作用域，那么在其作用域之后申明的新的局部变量就很有可能会复用过期局部变量的槽位，从而达到节省资源的目的。（下图中，this、a、b、c 理论上应该有 4 个变量，c 复用了 b 的槽）。<br><img src="/2023/05/15/JVM-%E5%9F%BA%E7%A1%80-JVM%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88-%E6%A0%88%E5%B8%A7-%E6%A7%BD.jpg"></p>
+<p>在栈帧中，与性能调优关系最为密切的就是局部变量表。在方法执行时，虚拟机使用局部变量表完成方法的传递。<br><strong>局部变量表中的变量</strong>也是重要的<strong>垃圾回收根节点</strong>，<strong>只要被局部变量表中直接或间接引用的对象都不会被回收</strong>。</p>
+<h4 id="操作数栈（表达式栈）"><a href="#操作数栈（表达式栈）" class="headerlink" title="操作数栈（表达式栈）"></a>操作数栈（表达式栈）</h4><p>每个独立的栈帧中除了局部变量表之外，还包含一个先进后出的操作数栈，也可以称为表达式栈。</p>
+<p><strong>操作数栈，主要用于保存计算过程的中间结果，同时作为计算过程中变量临时的存储空间</strong>。<br>每一个操作数栈都会拥有一个明确的栈深度用于存储数值，其所需的最大深度在编译期就定义好了，保存在方法的 Code 属性的<code>max_stack</code>数据项中。</p>
+<p>栈中的任何一个元素都可以是任意的 Java 数据类型。32bit 的类型占用一个栈单位深度，64bit 的类型占用两个栈单位深度。</p>
+<p><strong>如果被调用的方法带有返回值的话，其返回值将会被压入当前栈帧的操作数栈中</strong>。</p>
+<h5 id="栈顶缓存-Top-of-stack-Cashing"><a href="#栈顶缓存-Top-of-stack-Cashing" class="headerlink" title="栈顶缓存 Top-of-stack-Cashing"></a>栈顶缓存 Top-of-stack-Cashing</h5><p>HotSpot 的执行引擎采用的并非是基于寄存器的架构，但这并不代表 HotSpot VM 的实现并没有间接利用到寄存器资源。寄存器是物理 CPU 中的组成部分之一，它同时也是 CPU 中非常重要的高速存储资源。一般来说，寄存器的读/写速度非常迅速，甚至可以比内存的读/写速度快上几十倍不止，不过寄存器资源却非常有限，不同平台下的CPU 寄存器数量是不同和不规律的。寄存器主要用于缓存本地机器指令、数值和下一条需要被执行的指令地址等数据。</p>
+<p>基于栈式架构的虚拟机所使用的零地址指令更加紧凑，但完成一项操作的时候必然需要使用更多的入栈和出栈指令，这同时也就意味着将需要更多的指令分派（instruction dispatch）次数和内存读/写次数。由于操作数是存储在内存中的，因此频繁的执行内存读/写操作必然会影响执行速度。<br>为了解决这个问题，<strong>HotSpot JVM</strong>设计者们提出了<strong>栈顶缓存</strong>技术，<strong>将栈顶元素全部缓存在物理 CPU 的寄存器中，以此降低对内存的读/写次数，提升执行引擎的执行效率</strong>。</p>
+<h4 id="动态链接"><a href="#动态链接" class="headerlink" title="动态链接"></a>动态链接</h4><p>每一个栈帧内部都包含一个<strong>指向运行时常量池中该栈帧所属方法的引用</strong>。包含这个引用的目的就是为了支持当前方法的代码能够实现动态链接(Dynamic Linking)。</p>
+<p>在 Java 源文件被编译到字节码文件中时，所有的变量和方法引用都作为<strong>符号引用（Symbolic Reference）</strong>保存在 Class 文件的常量池中。<br>比如：描述一个方法调用了另外的其他方法时，就是通过常量池中指向方法的符号引用来表示的，那么<strong>动态链接的作用就是为了将这些符号引用转换为调用方法的直接引用</strong>。<br><img src="/2023/05/15/JVM-%E5%9F%BA%E7%A1%80-JVM%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88-%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5.jpg"></p>
+<p><strong>Q：JVM是如何执行方法调用的？</strong><br>方法调用不同于方法执行，<strong>方法调用阶段</strong>的唯一任务就是<strong>确定被调用方法的版本（即调用哪一个方法）</strong>，暂时还不涉及方法内部的具体运行过程。<br>Class 文件的编译过程中不包括传统编译器中的连接步骤，一切方法调用在Class文件里面存储的都是<strong>符号引用</strong>，而不是<strong>方法在实际运行时内存布局中的入口地址（直接引用）</strong>。也就是需要在类加载阶段，甚至到运行期才能确定目标方法的直接引用。</p>
+<p>在 JVM 中，将<strong>符号引用转换为调用方法的直接引用</strong>与<strong>方法的绑定机制</strong>有关，<strong>绑定是一个字段、方法或者类在符号引用被替换为直接引用的过程，这仅仅发生一次</strong>。</p>
+<ul>
+<li>静态链接 - 早期绑定<br>  当一个字节码文件被装载进 JVM 内部时，如果被调用的目标方法在<strong>编译期</strong>可知，且运行期保持不变时。这种情况下将调用方法的符号引用转换为直接引用的过程称之为静态链接。</li>
+<li>动态链接 - 晚期绑定<br>  如果被调用的方法在编译期无法被确定下来，也就是说，<strong>只能在程序运行期</strong>将调用方法的符号引用转换为直接引用，由于这种引用转换过程具备动态性，因此也就被称之为动态链接。</li>
+</ul>
+<h4 id="方法返回地址"><a href="#方法返回地址" class="headerlink" title="方法返回地址"></a>方法返回地址</h4><p>方法返回地址（return address），用来存放调用该方法的 PC 寄存器的值。</p>
+<p>一个方法的结束，有两种方式：1、正常执行完成；2、出现未处理的异常，非正常退出。</p>
+<p>无论通过哪种方式退出，在方法退出后都返回到该方法被调用的位置。<br>方法正常退出时，调用者的 PC 计数器的值作为返回地址，即调用该方法的指令的下一条指令的地址。<br>而通过异常退出的，返回地址是要通过异常表来确定的，栈帧中一般不会保存这部分信息。</p>
+<p>本质上，<strong>方法的退出就是当前栈帧出栈的过程</strong>。此时，需要恢复上层方法的局部变量表、操作数栈、将返回值压入调用者栈帧的操作数栈、设置PC寄存器值等，让调用者方法继续执行下去。<br>正常完成出口和异常完成出口的区别在于：通过异常完成出口退出的不会给他的上层调用者产生任何的返回值。</p>
+<h2 id="三、本地方法栈"><a href="#三、本地方法栈" class="headerlink" title="三、本地方法栈"></a>三、本地方法栈</h2><p>本地方法栈（Native Method Stack），Java 虚拟机栈用于管理 Java 方法的调用，而本地方法栈用于管理本地方法的调用，本地方法是使用 C 语言实现的。<br>本地方法栈也是线程私有的。<br>它的具体做法是 Native Method Stack 中登记 native 方法，在 Execution Engine 执行时加载本地方法库当某个线程调用一个本地方法时，它就进入了一个全新的并且不再受虚拟机限制的世界。它和虚拟机拥有同样的权限。</p>
+<h3 id="本地方法接口"><a href="#本地方法接口" class="headerlink" title="本地方法接口"></a>本地方法接口</h3><p>简单的讲，一个 Native Method 就是一个 Java 调用非 Java 代码的接口。我们知道的 Unsafe 类就有很多本地方法。</p>
+<p><strong>Q：为什么要使用本地方法（Native Method）?</strong></p>
+<h2 id="四、堆内存"><a href="#四、堆内存" class="headerlink" title="四、堆内存"></a>四、堆内存</h2><h3 id="内存划分：年轻代、老年代、永久代-元空间"><a href="#内存划分：年轻代、老年代、永久代-元空间" class="headerlink" title="内存划分：年轻代、老年代、永久代/元空间"></a>内存划分：年轻代、老年代、永久代/元空间</h3><p>对于大多数应用，Java 堆是 Java 虚拟机管理的内存中最大的一块，被所有线程共享。<br>此内存区域的唯一目的就是存放对象实例，几乎所有的对象实例以及数据都在这里分配内存。</p>
+<p>为了进行高效的垃圾回收，虚拟机把堆内存<strong>在逻辑上</strong>划分成三块区域（<strong>分代的唯一理由就是优化 GC 性能</strong>）：</p>
+<ul>
+<li>新生代（年轻代）：新对象和没达到一定年龄的对象都在新生代</li>
+<li>老年代：被长时间使用的对象，老年代的内存空间应该要比年轻代更大</li>
+<li>元空间（JDK1.8 之前叫永久代）：像一些方法中的操作临时对象等，JDK1.8 之前是占用 JVM 内存，JDK1.8 之后直接使用物理内存</li>
+</ul>
+<p><img src="/2023/05/15/JVM-%E5%9F%BA%E7%A1%80-JVM%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/%E5%A0%86%E5%86%85%E5%AD%98-%E5%88%86%E4%BB%A3%E7%BB%93%E6%9E%84.jpg"><br><img src="/2023/05/15/JVM-%E5%9F%BA%E7%A1%80-JVM%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/%E5%A0%86%E5%86%85%E5%AD%98-%E5%88%86%E4%BB%A3%E7%BB%93%E6%9E%842.jpg"></p>
+<p>Java 虚拟机规范规定，Java 堆可以是处于物理上不连续的内存空间中，只要逻辑上是连续的即可，像磁盘空间一样。实现时，既可以是固定大小，也可以是可扩展的，主流虚拟机都是可扩展的（通过<code>-Xmx</code>和<code>-Xms</code>控制），如果堆中没有完成实例分配，并且堆无法再扩展时，就会抛出 <code>OutOfMemoryError</code> 异常。<br><code>-Xms</code> 用来表示堆的<strong>起始内存</strong>，等价于 -XX:InitialHeapSize<br><code>-Xmx</code> 用来表示堆的<strong>最大内存</strong>，等价于 -XX:MaxHeapSize</p>
+<h4 id="年轻代-Yound-Generation"><a href="#年轻代-Yound-Generation" class="headerlink" title="年轻代 Yound Generation"></a>年轻代 Yound Generation</h4><p>年轻代是所有新对象创建的地方。<br>当年轻代不够分配时，执行垃圾收集，发生在年轻代的垃圾收集称为<code>Minor GC</code>。<br>年轻代被分为三个部分：伊甸园（<strong>Eden Memory</strong>）和两个幸存区（<strong>Survivor Memory，被称为from/to或s0/s1</strong>），默认比例是<code>8:1:1</code>。</p>
+<h4 id="老年代-Old-Generation"><a href="#老年代-Old-Generation" class="headerlink" title="老年代 Old Generation"></a>老年代 Old Generation</h4><p>老年代内存包含那些经过许多轮小型 GC 后仍然存活的对象。<br>大对象直接进入老年代（大对象是指需要大量连续内存空间的对象）。这样做的目的是避免在 Eden 区和两个Survivor 区之间发生大量的内存拷贝。</p>
+<p>通常，垃圾收集是在老年代内存满时执行的，老年代垃圾收集称为<code>主GC（Major GC）</code>，通常需要更长的时间。</p>
+<h3 id="TLAB"><a href="#TLAB" class="headerlink" title="TLAB"></a>TLAB</h3><p><strong>什么是 TLAB （Thread Local Allocation Buffer）?</strong></p>
+<ul>
+<li>从内存模型而不是垃圾回收的角度，对 Eden 区域继续进行划分，JVM 为每个线程分配了一个私有缓存区域，它包含在 Eden 空间内</li>
+<li>多线程同时分配内存时，使用 TLAB 可以避免一系列的非线程安全问题，同时还能提升内存分配的吞吐量，因此我们可以将这种内存分配方式称为快速分配策略</li>
+<li>OpenJDK 衍生出来的 JVM 大都提供了 TLAB 设计</li>
+</ul>
+<p><strong>为什么要有 TLAB ?</strong></p>
+<ul>
+<li>堆区是线程共享的，任何线程都可以访问到堆区中的共享数据</li>
+<li>由于对象实例的创建在 JVM 中非常频繁，因此在并发环境下从堆区中划分内存空间是线程不安全的</li>
+<li>为避免多个线程操作同一地址，需要使用加锁等机制，进而影响分配速度</li>
+</ul>
+<p>在程序中，可以通过<code>-XX:UseTLAB</code> 设置是否开启 TLAB 空间。<br>默认情况下，TLAB 空间的内存非常小，仅占有整个 Eden 空间的 1%，我们可以通过<code>-XX:TLABWasteTargetPercent</code>设置 TLAB 空间所占用 Eden 空间的百分比大小。<br>一旦对象在 TLAB 空间分配内存失败时，JVM 就会尝试着通过使用加锁机制确保数据操作的原子性，从而直接在 Eden 空间中分配内存。</p>
+<h3 id="堆是分配对象存储的唯一选择吗"><a href="#堆是分配对象存储的唯一选择吗" class="headerlink" title="堆是分配对象存储的唯一选择吗"></a>堆是分配对象存储的唯一选择吗</h3><blockquote>
+<p>随着 JIT 编译期的发展和逃逸分析技术的逐渐成熟，栈上分配、标量替换优化技术将会导致一些微妙的变化，所有的对象都分配到堆上也渐渐变得不那么“绝对”了。 ——《深入理解 Java 虚拟机》</p>
+</blockquote>
+<h2 id="五、方法区"><a href="#五、方法区" class="headerlink" title="五、方法区"></a>五、方法区</h2><p>方法区（Method Area）与 Java 堆一样，是所有<strong>线程共享</strong>的内存区域。<br>虽然 Java 虚拟机规范把方法区描述为堆的一个逻辑部分，但是它却有一个别名叫 Non-Heap（非堆），目的应该是与 Java 堆区分开。</p>
+<p>运行时常量池（Runtime Constant Pool）是方法区的一部分。<br>Class 文件中除了有类的版本/字段/方法/接口等描述信息外，还有一项信息是常量池（Constant Pool Table），用于存放编译期生成的各种字面量和符号引用，这部分内容将类在加载后进入方法区的运行时常量池中存放。<br>运行期间也可能将新的常量放入池中，这种特性被开发人员利用得比较多的是 String.intern()方法。</p>
+<p>受方法区内存的限制，当常量池无法再申请到内存时会抛出<code>OutOfMemoryError</code>异常。JVM 关闭后方法区即被释放。</p>
+<p><strong>方法区（method area）只是 JVM 规范中定义的一个概念</strong>，用于存储类信息、常量池、静态变量、JIT编译后的代码等数据，并没有规定如何去实现它，不同的厂商有不同的实现。</p>
+<p>永久代（PermGen）是 <code>Hotspot</code> 虚拟机特有的概念， Java8的时候又被元空间取代了。永久代和元空间都可以理解为方法区的落地实现。<br>永久代物理是堆的一部分，和新生代，老年代地址是连续的（受垃圾回收器管理），而元空间存在于本地内存（我们常说的堆外内存，不受垃圾回收器管理），这样就不受 JVM 限制了，也比较难发生OOM（都会有溢出异常）。</p>
+<h3 id="方法区内部结构"><a href="#方法区内部结构" class="headerlink" title="方法区内部结构"></a>方法区内部结构</h3><p>方法区用于存储已被虚拟机加载的类型信息、常量、静态变量、即时编译器编译后的代码缓存等。</p>
+<ul>
+<li>类型信息<br>  对每个加载的类型（类 class、接口 interface、枚举 enum、注解 annotation），JVM 必须在方法区中存储以下类型信息：<ul>
+<li>这个类型的完整有效名称（全名=包名.类名）</li>
+<li>这个类型直接父类的完整有效名（对于 interface或是 java.lang.Object，都没有父类）</li>
+<li>这个类型的修饰符（public，abstract，final 的某个子集）</li>
+<li>这个类型直接接口的一个有序列表</li>
+</ul>
+</li>
+<li>域Field信息<ul>
+<li>JVM 必须在方法区中保存类型的所有域的相关信息以及域的声明顺序</li>
+<li>域的相关信息包括：域名称、域类型、域修饰符（public、private、protected、static、final、volatile、transient 的某个子集）</li>
+</ul>
+</li>
+<li>方法信息<ul>
+<li>方法名称</li>
+<li>方法的返回类型</li>
+<li>方法参数的数量和类型</li>
+<li>方法的修饰符（public，private，protected，static，final，synchronized，native，abstract 的一个子集）</li>
+<li>方法的字符码（bytecodes）、操作数栈、局部变量表及大小（abstract 和 native 方法除外）</li>
+<li>异常表（abstract 和 native 方法除外）<ul>
+<li>每个异常处理的开始位置、结束位置、代码处理在程序计数器中的偏移地址、被捕获的异常类的常量池索引</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="运行时常量池"><a href="#运行时常量池" class="headerlink" title="运行时常量池"></a>运行时常量池</h3><p>运行时常量池（Runtime Constant Pool）是方法区的一部分。</p>
+<p>理解运行时常量池的话，我们先来说说字节码文件（Class 文件）中的常量池（常量池表）。</p>
+<h4 id="字节码文件的常量池"><a href="#字节码文件的常量池" class="headerlink" title="字节码文件的常量池"></a>字节码文件的常量池</h4><p>一个有效的字节码文件中除了包含类的版本信息、字段、方法以及接口等描述信息外，还包含一项信息那就是常量池表（Constant Pool Table），包含各种字面量和对类型、域和方法的符号引用。<br><strong>Q：为什么需要常量池？</strong><br>一个 Java 源文件中的类、接口，编译后产生一个字节码文件。而 Java 中的字节码需要数据支持，通常这种数据会很大以至于不能直接存到字节码里，换另一种方式，可以存到常量池，这个字节码包含了指向常量池的引用。在动态链接的时候用到的就是运行时常量池。</p>
+<p>如下，我们通过 jclasslib 查看一个只有 Main 方法的简单类，字节码中的 #2 指向的就是 Constant Pool<br><img src="/2023/05/15/JVM-%E5%9F%BA%E7%A1%80-JVM%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/%E6%96%B9%E6%B3%95%E5%8C%BA-%E8%BF%90%E8%A1%8C%E6%97%B6%E5%B8%B8%E9%87%8F%E6%B1%A0-%E5%AD%97%E8%8A%82%E7%A0%81%E6%96%87%E4%BB%B6%E7%9A%84%E5%B8%B8%E9%87%8F%E6%B1%A0.jpg"><br>常量池可以看作是一张表，虚拟机指令根据这张常量表找到要执行的类名、方法名、参数类型、字面量等类型。</p>
+<h4 id="运行时常量池-1"><a href="#运行时常量池-1" class="headerlink" title="运行时常量池"></a>运行时常量池</h4><p>在加载类和结构到虚拟机后，就会创建对应的运行时常量池。</p>
+<p><strong>常量池表（Constant Pool Table）</strong>是<strong>Class字节码文件</strong>的一部分，用于存储编译期生成的各种字面量和符号引用，<strong>这部分内容将在类加载后存放到方法区的运行时常量池中</strong>。</p>
+<p>JVM 为每个已加载的类型（类或接口）都维护一个常量池。池中的数据项像数组项一样，是通过索引访问的。</p>
+<h3 id="方法区在JDK6、7、8中的演进细节"><a href="#方法区在JDK6、7、8中的演进细节" class="headerlink" title="方法区在JDK6、7、8中的演进细节"></a>方法区在JDK6、7、8中的演进细节</h3><p>只有 HotSpot 才有永久代的概念。</p>
+<ul>
+<li>jdk1.6及之前有永久代，静态变量存放在永久代上</li>
+<li>jdk1.7有永久代，但已经逐步“去永久代”，字符串常量池、静态变量移除，保存在堆中</li>
+<li>jdk1.8及之后取消永久代，类型信息、字段、方法、常量保存在本地内存的元空间，但字符串常量池、静态变量仍在堆中</li>
+</ul>
+<p><strong>HotSpot中字符串常量池保存哪里？永久代？方法区还是堆区？</strong></p>
+<ul>
+<li>运行时常量池（Runtime Constant Pool）是虚拟机规范中是方法区的一部分，在加载类和结构到虚拟机后，就会创建对应的运行时常量池；而字符串常量池是这个过程中常量字符串的存放位置。所以从这个角度，字符串常量池属于虚拟机规范中的方法区，它是一个逻辑上的概念；而堆区、永久代以及元空间是实际的存放位置。</li>
+<li>不同的虚拟机对虚拟机的规范（比如方法区）是不一样的，只有 HotSpot 才有永久代的概念。</li>
+<li>HotSpot也是发展的，由于一些问题的存在，HotSpot考虑逐渐去永久代，对于不同版本的JDK，实际的存储位置是有差异的，具体看如下表格：<table>
+<thead>
+<tr>
+<th align="left">JDK版本</th>
+<th align="left">是否有永久代，字符串常量池放在哪里？</th>
+<th align="left">方法区逻辑上规范，由哪些实际的部分实现的？</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">jdk1.6及之前</td>
+<td align="left">有永久代，运行时常量池（包括字符串常量池）、静态变量存放在永久代上</td>
+<td align="left">这个时期方法区在HotSpot中是由永久代来实现的，以至于这个时期说方法区就是指永久代</td>
+</tr>
+<tr>
+<td align="left">jdk1.7</td>
+<td align="left">有永久代，但已经逐步“去永久代”，字符串常量池、静态变量移除，保存在堆中；</td>
+<td align="left">这个时期方法区在HotSpot中由永久代（类型信息、字段、方法、常量）和堆（字符串常量池、静态变量）共同实现</td>
+</tr>
+<tr>
+<td align="left">jdk1.8及之后</td>
+<td align="left">取消永久代，类型信息、字段、方法、常量保存在本地内存的元空间，但字符串常量池、静态变量仍在堆中</td>
+<td align="left">这个时期方法区在HotSpot中由本地内存的元空间（类型信息、字段、方法、常量）和堆（字符串常量池、静态变量）共同实现</td>
+</tr>
+</tbody></table>
+</li>
+</ul>
 </div><div class="tags"><a href="/tags/JVM"><i class="fa fa-tag">JVM</i></a></div><div class="post-nav"><a class="pre" href="/2023/05/15/JVM-%E5%9F%BA%E7%A1%80-Java%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/">JVM-基础-Java内存模型</a><a class="next" href="/2023/05/15/JVM-%E7%9F%A5%E8%AF%86%E4%BD%93%E7%B3%BB/">JVM-知识体系</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
   clientID: '8359b7a19b78f2b9e112',
   clientSecret: '5ad69dc1633a1834322067d017b6313bd231457c',
@@ -16,7 +226,7 @@
   distractionFreeMode: false
 })
 gitalk.render('container')
-</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E6%95%B0%E6%8D%AE%E5%8C%BA%E5%9F%9F%E6%80%BB%E8%A7%88"><span class="toc-text">运行时数据区域总览</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E7%A8%8B%E5%BA%8F%E8%AE%A1%E6%95%B0%E5%99%A8"><span class="toc-text">一、程序计数器</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%9C%E7%94%A8"><span class="toc-text">作用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-text">概述</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88"><span class="toc-text">二、虚拟机栈</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0-1"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%88%E7%9A%84%E5%AD%98%E5%82%A8%E5%8D%95%E4%BD%8D"><span class="toc-text">栈的存储单位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%88%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86"><span class="toc-text">栈运行原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%88%E5%B8%A7%E7%9A%84%E5%86%85%E9%83%A8%E7%BB%93%E6%9E%84"><span class="toc-text">栈帧的内部结构</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E8%A1%A8"><span class="toc-text">局部变量表</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%A7%BD-Slot"><span class="toc-text">槽 Slot</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88%EF%BC%88%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%A0%88%EF%BC%89"><span class="toc-text">操作数栈（表达式栈）</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%A0%88%E9%A1%B6%E7%BC%93%E5%AD%98-Top-of-stack-Cashing"><span class="toc-text">栈顶缓存 Top-of-stack-Cashing</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5"><span class="toc-text">动态链接</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E8%BF%94%E5%9B%9E%E5%9C%B0%E5%9D%80"><span class="toc-text">方法返回地址</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%9C%AC%E5%9C%B0%E6%96%B9%E6%B3%95%E6%A0%88"><span class="toc-text">三、本地方法栈</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E6%96%B9%E6%B3%95%E6%8E%A5%E5%8F%A3"><span class="toc-text">本地方法接口</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E5%A0%86%E5%86%85%E5%AD%98"><span class="toc-text">四、堆内存</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%EF%BC%9A%E5%B9%B4%E8%BD%BB%E4%BB%A3%E3%80%81%E8%80%81%E5%B9%B4%E4%BB%A3%E3%80%81%E6%B0%B8%E4%B9%85%E4%BB%A3-%E5%85%83%E7%A9%BA%E9%97%B4"><span class="toc-text">内存划分：年轻代、老年代、永久代&#x2F;元空间</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B9%B4%E8%BD%BB%E4%BB%A3-Yound-Generation"><span class="toc-text">年轻代 Yound Generation</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%80%81%E5%B9%B4%E4%BB%A3-Old-Generation"><span class="toc-text">老年代 Old Generation</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#TLAB"><span class="toc-text">TLAB</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A0%86%E6%98%AF%E5%88%86%E9%85%8D%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8%E7%9A%84%E5%94%AF%E4%B8%80%E9%80%89%E6%8B%A9%E5%90%97"><span class="toc-text">堆是分配对象存储的唯一选择吗</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%96%B9%E6%B3%95%E5%8C%BA"><span class="toc-text">五、方法区</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E5%8C%BA%E5%86%85%E9%83%A8%E7%BB%93%E6%9E%84"><span class="toc-text">方法区内部结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E5%B8%B8%E9%87%8F%E6%B1%A0"><span class="toc-text">运行时常量池</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%97%E8%8A%82%E7%A0%81%E6%96%87%E4%BB%B6%E7%9A%84%E5%B8%B8%E9%87%8F%E6%B1%A0"><span class="toc-text">字节码文件的常量池</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E5%B8%B8%E9%87%8F%E6%B1%A0-1"><span class="toc-text">运行时常量池</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E5%8C%BA%E5%9C%A8JDK6%E3%80%817%E3%80%818%E4%B8%AD%E7%9A%84%E6%BC%94%E8%BF%9B%E7%BB%86%E8%8A%82"><span class="toc-text">方法区在JDK6、7、8中的演进细节</span></a></li></ol></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
 if (search_path.length == 0) {
   search_path = 'search.xml';
 }
