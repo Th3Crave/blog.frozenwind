@@ -23,6 +23,16 @@
 <li>加锁 set NX PX + 重试 + 重试间隔</li>
 <li>解锁 采用lua脚本</li>
 </ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RedisDistributedLock</span> </span>&#123;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> RedisTemplate&lt;String, String&gt; redisTemplate;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 锁的过期时间，单位毫秒</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> LOCK_EXPIRE_TIME = <span class="number">30000</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 释放锁的 Lua 脚本</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String UNLOCK_SCRIPT =</span><br><span class="line">            <span class="string">&quot;if redis.call(&#x27;get&#x27;, KEYS[1]) == ARGV[1] then &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;redis.call(&#x27;del&#x27;, KEYS[1]); &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;return true; &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;else return false; &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;end&quot;</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 获取分布式锁</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">lock</span><span class="params">(String key, String value)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 加锁不用lua表达式</span></span><br><span class="line">        Boolean result = redisTemplate.opsForValue().setIfAbsent(key, value, expireTime, TimeUnit.SECONDS);</span><br><span class="line">        Boolean result = redisTemplate.execute(script, Arrays.asList(keys), args);</span><br><span class="line">        <span class="keyword">return</span> result != <span class="keyword">null</span> &amp;&amp; result;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 释放分布式锁</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">unlock</span><span class="params">(String key, String value)</span> </span>&#123;</span><br><span class="line">        String[] keys = &#123;key&#125;;</span><br><span class="line">        String[] args = &#123;value&#125;;</span><br><span class="line">        RedisScript&lt;Boolean&gt; script = <span class="keyword">new</span> DefaultRedisScript&lt;&gt;(UNLOCK_SCRIPT, Boolean.class);</span><br><span class="line">        Boolean result = redisTemplate.execute(script, Arrays.asList(keys), args);</span><br><span class="line">        <span class="keyword">return</span> result != <span class="keyword">null</span> &amp;&amp; result;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>为什么建议用lua脚本来解锁，而不是直接RedisTemplate.detele(key)</strong><br>当多个线程同时争抢同一个 Redis 锁时，如果这些线程都是通过使用 RedisTemplate 的 delete() 方法来释放锁的话，可能会出现以下情况：</p>
+<ol>
+<li>线程 A 成功获取了锁，并设置了一个过期时间；</li>
+<li>过了一段时间后，锁的过期时间到了，Redis 自动将锁删除；</li>
+<li>同时，线程 B 也在尝试获取锁，由于此时锁已经被 Redis 删除了，线程 B 成功获取了锁；</li>
+<li>线程 A 在这个时候调用了 RedisTemplate 的 delete() 方法来释放锁，由于此时 Redis 中已经不存在该锁了，所以线程 A 的操作实际上是删除了线程 B 获取到的锁，从而导致线程 B 的锁失效。</li>
+</ol>
+<p>因此，使用 RedisTemplate 的 delete() 方法来释放锁的方式可能存在删除其他线程获取的锁的风险。为了避免这种情况的发生，可以使用 Redis 的 Lua 脚本，在 Redis 中执行删除操作，确保只删除对应值的 key-value 对，避免误删其他线程的锁。</p>
 <h3 id="Redis集群-RedLock"><a href="#Redis集群-RedLock" class="headerlink" title="Redis集群 - RedLock"></a>Redis集群 - RedLock</h3><p>假设有两个服务A、B都希望获得锁，有一个包含了5个redis master的Redis Cluster，执行过程大致如下：</p>
 <ol>
 <li>客户端获取当前时间戳，单位: 毫秒</li>
@@ -35,7 +45,7 @@
 <ul>
 <li>特色<ul>
 <li>redisson所有指令都通过lua脚本执行，保证了操作的原子性</li>
-<li>edisson设置了watchdog看门狗，“看门狗”的逻辑保证了没有死锁发生</li>
+<li>redisson设置了watchdog看门狗，“看门狗”的逻辑保证了没有死锁发生</li>
 <li>redisson支持Redlock的实现方式。</li>
 </ul>
 </li>
@@ -44,7 +54,7 @@
 <li>线程去获取锁，获取失败: 订阅了解锁消息，然后再尝试获取锁，获取成功后，执行lua脚本，保存数据到redis数据库。</li>
 </ol>
 </li>
-<li>互斥<br>  如果这个时候客户端B来尝试加锁，执行了同样的一段lua脚本。第一个if判断会执行“exists myLock”，发现myLock这个锁key已经存在。<br>  接着第二个if判断，判断myLock锁key的hash数据结构中，是否包含客户端B的ID，但明显没有，那么客户端B会获取到pttl myLock返回的一个数字，代表myLock这个锁key的剩余生存时间。<br>  此时客户端B会进入一个while循环，不停的尝试加锁。</li>
+<li>互斥<br>  如果这个时候客户端B来尝试加锁，执行了同样的一段lua脚本。第一个if判断会执行“exists myLock”，发现myLock这个锁key已经存在。<br>  接着第二个if判断，判断myLock锁key的hash数据结构中，是否包含客户端B的ID，但明显没有，那么客户端B会获取到pttl myLock返回的一个数字，代表myLock这个锁key的剩余生存时间。<br>  <strong>此时客户端B会进入一个while循环，不停的尝试加锁</strong>。</li>
 <li>watch dog自动延时机制<br>  客户端A加锁的锁key默认生存时间只有30秒，如果超过了30秒，客户端A还想一直持有这把锁，怎么办？其实只要客户端A一旦加锁成功，就会启动一个watch dog看门狗，它是一个后台线程，会每隔10秒检查一下，如果客户端A还持有锁key，那么就会不断的延长锁key的生存时间。</li>
 <li>可重入<br>  每次lock会调用incrby，每次unlock会减一。</li>
 </ul>
