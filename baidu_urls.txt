@@ -83,7 +83,7 @@ https://blog.frozenwind.online/2019/11/22/MySQL%E7%B4%A2%E5%BC%95%E5%8E%9F%E7%90
 https://blog.frozenwind.online/2019/09/19/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/
 https://blog.frozenwind.online/2019/09/19/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E2%80%94%E2%80%94RabbitMQ/
 https://blog.frozenwind.online/2019/09/16/Redis/
-https://blog.frozenwind.online/2019/08/21/linux-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93/
+https://blog.frozenwind.online/2019/08/21/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-linux-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93/
 https://blog.frozenwind.online/2019/07/24/MySQL/
 https://blog.frozenwind.online/2019/05/29/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E2%80%94%E2%80%94%E6%A0%91/
 https://blog.frozenwind.online/2019/05/28/%E9%9A%8F%E7%AC%94-%E8%90%BD%E5%AF%9E%E8%AF%97%E4%BA%BA/
