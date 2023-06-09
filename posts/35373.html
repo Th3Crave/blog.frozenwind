@@ -1,0 +1,60 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="人生到处知何似，应似飞鸿踏雪泥。泥上偶然留指爪，鸿飞那复计东西。"><title>ElasticSearch-数据同步方案 | frozeNwInd</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.0.0"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/normalize/latest/normalize.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/grids-responsive-min.min.css"><link rel="stylesheet" href="//lib.baomitu.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//lib.baomitu.com/jquery/latest/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement('script');
+  hm.src = 'https://hm.baidu.com/hm.js?' + 'bbf19a98c9ae28f2e1e8cfcee1d9585e';
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+  })();</script><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">ElasticSearch-数据同步方案</h1><a id="logo" href="/.">frozeNwInd</a><p class="description">吕乘风的博客</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/history/"><i class="fa fa-history"> 历史</i></a><a href="/message/"><i class="fa fa-comment"> 留言</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">ElasticSearch-数据同步方案</h1><div class="post-meta">2023-04-24<span> | </span><span class="category"><a href="/categories/technology/">technology</a><a href="/categories/technology/%E4%B8%AD%E9%97%B4%E4%BB%B6/">中间件</a><a href="/categories/technology/%E4%B8%AD%E9%97%B4%E4%BB%B6/ElasticSearch/">ElasticSearch</a></span></div><div class="post-content"><h2 id="数据同步类型"><a href="#数据同步类型" class="headerlink" title="数据同步类型"></a>数据同步类型</h2><ol>
+<li>增量同步<br> ES服务接入后，MySQL数据库数据实时增量同步至ES中。</li>
+<li>全量同步<br> ES服务接入时，将MySQL中的历史数据优雅切完整的置入ES中。</li>
+</ol>
+<h2 id="数据同步方案"><a href="#数据同步方案" class="headerlink" title="数据同步方案"></a>数据同步方案</h2><h3 id="1-同步双写"><a href="#1-同步双写" class="headerlink" title="1. 同步双写"></a>1. 同步双写</h3><p><img src="/posts/35373/%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5-%E5%90%8C%E6%AD%A5%E5%8F%8C%E5%86%99.png"></p>
+<ul>
+<li>优点<br>  实现最简单，新增、更新、删除时，写入数据库同时写入ES。</li>
+<li>缺点<ul>
+<li>业务逻辑耦合度高，耦合大量数据同步代码；</li>
+<li>写入两个存储，接口的响应时间变长；</li>
+<li>不便于扩展，搜索可能会有一些个性化需求，需要对数据进行聚合。</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-ES服务订阅消息队列，异步写入"><a href="#2-ES服务订阅消息队列，异步写入" class="headerlink" title="2. ES服务订阅消息队列，异步写入"></a>2. ES服务订阅消息队列，异步写入</h3><p><img src="/posts/35373/%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5-%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%BC%82%E6%AD%A5.png"><br>业务数据有变动的时候，将数据丢进MQ。为了解耦合，一般会拆分一个搜索服务，由搜索服务去订阅数据变动的消息，来完成同步。<br>一般数据需要聚合处理成类似宽表的结构，搜索服务需要查库或者远程调用接口，<strong>回查</strong>来完成数据的聚合。</p>
+<ul>
+<li>优点<ul>
+<li>解耦合，业务服务不需要关注数据同步</li>
+<li>实时性较好，适用MQ，正常情况下，同步完成在秒级</li>
+</ul>
+</li>
+<li>缺点<br>  引入了新的组件和服务，复杂度提升</li>
+</ul>
+<h3 id="3-定时任务"><a href="#3-定时任务" class="headerlink" title="3. 定时任务"></a>3. 定时任务</h3><p>如果数据量不大，需要快速搞搞实现的话，可以选择定时任务的方式。</p>
+<ul>
+<li>优点：不改变原来的代码，侵入性低，没有业务强耦合。</li>
+<li>缺点：时效性差，定时任务的执行周期不好设定；需要频繁的查询数据库，给数据库增加一定的压力。</li>
+</ul>
+<h4 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h4><ol>
+<li>近实时update任务<br> 定时任务按较短的时间周期，读取<strong>UpdateTime大于上一次读取时间的所有数据</strong>，即该段时间内的增量，将这些数据写入到es，然后更新定时任务中的<strong>UpdateTime标识</strong>，重复执行。</li>
+<li>全量修复任务<br> 每小时全量对比修复一次数据。</li>
+</ol>
+<h3 id="4-数据订阅，基于-MySQL-binlog"><a href="#4-数据订阅，基于-MySQL-binlog" class="headerlink" title="4. 数据订阅，基于 MySQL binlog"></a>4. 数据订阅，基于 MySQL binlog</h3><p>MySQL 通过 binlog 订阅实现主从同步，各路数据订阅框架比如 canal 就依据这个原理，将 client 组件伪装成从库，来实现数据订阅。</p>
+<p><img src="/posts/35373/%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5-canal.png"><br>借助canal，实现canal-client，监听和聚合数据，写入ES。</p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_43846997/article/details/95940565?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_baidulandingword~default-9-95940565-blog-104222544.235%5Ev32%5Epc_relevant_default_base3&spm=1001.2101.3001.4242.6&utm_relevant_index=12">基于 MySQL Binlog 的 Elasticsearch 数据同步实践</a><br><a target="_blank" rel="noopener" href="https://blog.csdn.net/bianlifengtech/article/details/120327575?spm=1001.2101.3001.6650.10&utm_medium=distribute.pc_relevant.none-task-blog-2~default~BlogCommendFromBaidu~Rate-10-120327575-blog-95940565.235%5Ev32%5Epc_relevant_default_base3&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2~default~BlogCommendFromBaidu~Rate-10-120327575-blog-95940565.235%5Ev32%5Epc_relevant_default_base3&utm_relevant_index=16">基于MySQL binlog日志，实现Elasticsearch近实时同步实践</a></p>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_43114485/article/details/104222544?spm=1001.2101.3001.6650.10&utm_medium=distribute.pc_relevant.none-task-blog-2~default~BlogCommendFromBaidu~Rate-10-104222544-blog-126031022.235%5Ev32%5Epc_relevant_default_base3&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2~default~BlogCommendFromBaidu~Rate-10-104222544-blog-126031022.235%5Ev32%5Epc_relevant_default_base3&utm_relevant_index=11">ElasticSearch数据的同步方案,遇到的坑</a></p>
+<h3 id="实时性要求高的场景，ES如何使用"><a href="#实时性要求高的场景，ES如何使用" class="headerlink" title="实时性要求高的场景，ES如何使用"></a>实时性要求高的场景，ES如何使用</h3><p>ES索引数据写入过程：<strong>write -&gt; refresh -&gt; flush -&gt; merge</strong>。<br>新增数据时，会先写入到ES用户进程的内存缓冲区，然后定时（默认是每隔1秒）写入到操作系统（内核态）的缓存，然后由操作系统决定刷盘时机，数据落入磁盘。<br>当数据写入到操作系统的缓存，数据就可以被搜索到。所以ES是近实时搜索，而非实时。文档的变化并不是立即对搜索可见，但会在一秒之内变为可见。<br>如果业务系统的ES对于refresh是配置为默认1秒或者大于1秒，对于实时性要求高的业务，数据的准确性会有问题。</p>
+</div><div class="tags"><a href="/tags/ElasticSearch"><i class="fa fa-tag">ElasticSearch</i></a></div><div class="post-nav"><a class="pre" href="/posts/22426.html">mybatis-spring</a><a class="next" href="/posts/32497.html">SpringBoot源码分析-自动装配</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+  clientID: '8359b7a19b78f2b9e112',
+  clientSecret: '5ad69dc1633a1834322067d017b6313bd231457c',
+  repo: 'gitalk',
+  owner: 'Th3Crave',
+  admin: ['Th3Crave'],
+  id: md5(location.pathname),
+  distractionFreeMode: false
+})
+gitalk.render('container')
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5%E7%B1%BB%E5%9E%8B"><span class="toc-text">数据同步类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5%E6%96%B9%E6%A1%88"><span class="toc-text">数据同步方案</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%90%8C%E6%AD%A5%E5%8F%8C%E5%86%99"><span class="toc-text">1. 同步双写</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-ES%E6%9C%8D%E5%8A%A1%E8%AE%A2%E9%98%85%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%EF%BC%8C%E5%BC%82%E6%AD%A5%E5%86%99%E5%85%A5"><span class="toc-text">2. ES服务订阅消息队列，异步写入</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%AE%9A%E6%97%B6%E4%BB%BB%E5%8A%A1"><span class="toc-text">3. 定时任务</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B7%E4%BD%93%E5%AE%9E%E7%8E%B0"><span class="toc-text">具体实现</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E6%95%B0%E6%8D%AE%E8%AE%A2%E9%98%85%EF%BC%8C%E5%9F%BA%E4%BA%8E-MySQL-binlog"><span class="toc-text">4. 数据订阅，基于 MySQL binlog</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E6%97%B6%E6%80%A7%E8%A6%81%E6%B1%82%E9%AB%98%E7%9A%84%E5%9C%BA%E6%99%AF%EF%BC%8CES%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8"><span class="toc-text">实时性要求高的场景，ES如何使用</span></a></li></ol></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+  search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>
