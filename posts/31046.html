@@ -25,11 +25,11 @@
 </ul>
 <h4 id="Kafka为什么吞吐量大、速度快【重要】"><a href="#Kafka为什么吞吐量大、速度快【重要】" class="headerlink" title="Kafka为什么吞吐量大、速度快【重要】"></a>Kafka为什么吞吐量大、速度快【重要】</h4><ol>
 <li><p><strong>Partition并行 分区分段+索引</strong><br> Kafka的message是按topic分类存储的，topic中的数据又是按照一个一个的partition即分区存储到不同broker节点。<br> 每个partition对应了操作系统上的一个文件夹，partition实际上又是按照segment分段存储的。<br> 这也非常符合分布式系统分区分桶的设计思想。</p>
-<p> 通过这种分区分段的设计，Kafka的message消息实际上是分布式存储在一个一个小的segment中的，每次文件操作也是直接操作的segment。<br> 为了进一步的查询优化，Kafka又默认为分段后的数据文件建立了索引文件，就是文件系统上的.index文件。<br> 这种分区分段+索引的设计，不仅提升了数据读取的效率，同时也提高了数据操作的并行度。</p>
+<p> 通过这种分区分段的设计，Kafka的message消息实际上是分布式存储在一个一个小的segment中的，每次文件操作也是直接操作的segment。<br> 为了进一步的查询优化，Kafka又默认为分段后的数据文件建立了索引文件，就是文件系统上的<code>.index</code>文件。<br> 这种<strong>分区分段+索引</strong>的设计，不仅提升了数据读取的效率，同时也提高了数据操作的并行度。</p>
 </li>
 <li><p><strong>顺序读写磁盘</strong><br> Kafka的message是不断追加到本地磁盘文件末尾的，而不是随机的写入，这使得Kafka写入吞吐量得到了显著提升 。</p>
 <blockquote>
-<p>影响磁盘的关键因素是磁盘服务时间，即磁盘完成一个 I/O 请求所花费的时间，它由寻道时间、旋转延迟和数据传输时间三部分构成。<br>机械硬盘的<strong>连续读写</strong>性能很好，但<strong>随机读写</strong>性能很差，这主要是因为磁头移动到正确的磁道上需要时间，随机读写时，磁头需要不停的移动，时间都浪费在了磁头寻址上，所以性能不高。衡量磁盘的重要主要指标是 IOPS 和吞吐量。<br>在许多的开源框架如 Kafka、HBase 中，都通过追加写的方式来尽可能的将随机 I/O 转换为顺序 I/O，以此来降低寻址时间和旋转延时，从而最大限度的提高 IOPS。</p>
+<p>影响磁盘的关键因素是磁盘服务时间，即磁盘完成一个 I/O 请求所花费的时间，它由寻道时间、旋转延迟和数据传输时间三部分构成。<br>机械硬盘的<strong>连续读写</strong>性能很好，但<strong>随机读写</strong>性能很差，这主要是因为磁头移动到正确的磁道上需要时间，随机读写时，磁头需要不停的移动，时间都浪费在了磁头寻址上，所以性能不高。衡量磁盘的重要主要指标是 IOPS 和吞吐量。<br>在许多的开源框架如 Kafka、HBase 中，都<strong>通过追加写的方式来尽可能的将随机 I/O 转换为顺序 I/O，以此来降低寻址时间和旋转延时</strong>，从而最大限度的提高 IOPS。</p>
 </blockquote>
 <p> Kafka的每一个Partition其实都是一个文件，收到消息后Kafka会把数据插入到文件末尾。</p>
 <p> 这种方法有一个缺陷：<strong>没有办法删除数据</strong>。所以Kafka是不会删除数据的，它会把所有的数据都保留下来，每个消费者（Consumer）对每个Topic都有一个offset用来表示读取到了第几条数据。<br> 如果不删除硬盘肯定会被撑满，所以Kakfa提供了两种策略来删除数据。一是基于时间，二是基于partition文件大小。具体配置可以参看它的配置文档。</p>
@@ -88,7 +88,7 @@
 </li>
 <li><p><strong>Partition</strong><br>  Partition（分区），是Kafka下数据存储的基本单元，这个是物理上的概念。</p>
 <p>  一个 topic 可以分为多个 partition，每个 partition 都是一个有序的队列。<br>  主题可以被分为若干个分区（partition），同一个主题中的分区可以不在一个机器上，有可能会部署在多个机器上，由此来实现 kafka 的伸缩性，单一主题中的分区有序，但是无法保证主题中所有的分区有序。</p>
-<p>  同一个分区（partition）可以被不同的消费者组同时消费；但是在同一个消费者组内，一个分区只能被一个消费者消费。</p>
+<p>  同一个分区（partition）可以被不同的消费者组同时消费；<br>  但是在同一个消费者组内，一个分区只能被一个消费者消费。</p>
 </li>
 </ul>
 <h4 id="当broker里面的topic数量过多时，kafka的性能不如rocketMq？"><a href="#当broker里面的topic数量过多时，kafka的性能不如rocketMq？" class="headerlink" title="当broker里面的topic数量过多时，kafka的性能不如rocketMq？"></a>当broker里面的topic数量过多时，kafka的性能不如rocketMq？</h4><blockquote>
