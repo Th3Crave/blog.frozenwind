@@ -29,7 +29,6 @@
 <p>解决方案：分布式锁(zookeeper和redis都可以实现分布式锁)。如果不存在redis的并发竞争key问题，不要使用分布式锁，这样会影响性能。</p>
 <p>基于zookeeper临时有序节点可以实现的分布式锁。<br>大致思想为：每个客户端对某个方法加锁时，在zookeeper上的与该方法对应的指定节点的目录下，生成一个唯一的瞬时有序节点。判断是否获取锁的方式很简单，只需要判断有序节点中序号最小的一个。当释放锁的时候，只需将这个瞬时节点删除即可。同时，其可以避免服务器宕机导致的锁无法释放，而产生的死锁问题。完成业务流程后，删除对应的子节点释放锁。</p>
 <h3 id="如何保证缓存与数据库双写时的数据一致性？"><a href="#如何保证缓存与数据库双写时的数据一致性？" class="headerlink" title="如何保证缓存与数据库双写时的数据一致性？"></a>如何保证缓存与数据库双写时的数据一致性？</h3><p>只要使用缓存，就可能会涉及到缓存与数据库双存储双写，只要是双写，就一定会有数据一致性的问题，那么你如何解决一致性问题？</p>
-<p>一般来说，就是如果你的系统不是严格要求缓存+数据库必须一致性的话(缓存可以稍微的跟数据库偶尔有不一致的情况，最好不要做这个方案)，读请求和写请求串行化，串到一个内存队列里去，这样就可以保证一定不会出现不一致的情况。<br>串行化之后，就会导致系统的吞吐量会大幅度的降低，用比正常情况下多几倍的机器去支撑线上的一个请求。</p>
 <h2 id="Redis的线程模型"><a href="#Redis的线程模型" class="headerlink" title="Redis的线程模型"></a>Redis的线程模型</h2><p>Redis内部使用<code>文件事件处理器 file event handler</code>，这个文件事件处理器是<code>单线程</code>的，所以redis才叫做单线程的模型。<br>Redis的线程模型是基于单Reactor单线程模型实现。</p>
 <p><img src="/posts/27273/redis-%E5%8D%95%E7%BA%BF%E7%A8%8B%E6%A8%A1%E5%9E%8B.png"></p>
 <p>文件事件处理器的结构包含4个部分：</p>
@@ -329,9 +328,23 @@
 <p>RDB中的核心思路是<strong>Copy-on-Write（写时复制）</strong>，来保证在进行快照操作的这段时间，需要压缩写入磁盘上的数据在内存中不会发生变化。<br>在正常的快照操作中，一方面Redis主进程会fork一个新的快照进程专门来做这个事情，这样保证了Redis服务不会停止对客户端包括写请求在内的任何响应。另一方面这段时间发生的数据变化会以副本的方式存放在另一个新的内存区域，待快照操作结束后才会同步到原来的内存区域。<br><img src="/posts/27273/redis-rdb-cow.jpg"></p>
 <p>针对RDB不适合实时持久化的问题，Redis提供了AOF持久化方式来解决</p>
 <h3 id="AOF-append-only-file-持久化"><a href="#AOF-append-only-file-持久化" class="headerlink" title="AOF(append-only file)持久化"></a>AOF(append-only file)持久化</h3><blockquote>
-<p>Redis是“写后”日志，Redis先执行命令，把数据写入内存，然后才记录日志。<br>日志里记录的是Redis收到的每一条命令，这些命令是以文本形式保存。<br>PS: 大多数的数据库采用的是写前日志（WAL），例如MySQL，通过写前日志和两阶段提交，实现数据和逻辑的一致性。</p>
+<p><strong>Redis是写后日志，Redis先执行命令，把数据写入内存，然后才记录日志</strong>。<br>日志里记录的是Redis收到的每一条命令，这些命令是以文本形式保存。<br>PS: 大多数的<strong>数据库采用的是写前日志（Write Ahead Log，WAL），例如MySQL</strong>，通过写前日志和两阶段提交，实现数据和逻辑的一致性。</p>
 </blockquote>
-<p>AOF日志采用写后日志，即<code>先写内存，后写日志</code>。<br><strong>为什么采用写后日志？</strong></p>
+<p>AOF日志采用写后日志，即<code>先写内存，后写日志</code>。</p>
+<ul>
+<li><strong>为什么MySQL是日志先行？</strong><ul>
+<li>首先区分MySQL的日志类型：InnoDB引擎层的undo log和redo log，Server层的binlog</li>
+<li>InnoDB插入一条数据先写到Buffer pool中，并不立即刷盘，所以要先写redo log日志保证持久化，事务提交成功之后写入binlog。数据刷入磁盘后会将redo log中的记录删除，redo log只保存没有落盘的数据。</li>
+<li>MySQL在server层会对sql语句进行合法性检查，记入日志中的sql语句一定是没有错误的。</li>
+</ul>
+</li>
+<li><strong>Redis为什么先执行命令再写日志？</strong><ul>
+<li>Redis没有预检测，在执行时才知道命令是否正确，正确执行之后再写日志。</li>
+<li>Redis的AOF持久化日志的定位与MySQL的定位的区别。</li>
+<li>Redis是基于内存的，先修改到内存再持久化命令到日志文件。</li>
+</ul>
+</li>
+</ul>
 <h4 id="如何实现AOF"><a href="#如何实现AOF" class="headerlink" title="如何实现AOF"></a>如何实现AOF</h4><p>AOF日志记录Redis的每个写命令，步骤分为：<strong>命令追加（append）</strong>、<strong>文件写入（write）</strong>和<strong>文件同步（sync）</strong>。</p>
 <ul>
 <li><strong>命令追加</strong><br>  当AOF持久化功能打开了，服务器在执行完一个写命令之后，会以协议格式将被执行的写命令追加到服务器的 aof_buf 缓冲区。</li>
@@ -354,8 +367,9 @@
 <p><strong>AOF重写会阻塞吗？</strong><br>AOF重写过程是由后台进程<strong>bgrewriteaof</strong>来完成的。<br>主线程fork出后台的bgrewriteaof子进程，fork会把主线程的内存拷贝一份给bgrewriteaof子进程，这里面就包含了数据库的最新数据。然后，bgrewriteaof子进程就可以在不影响主线程的情况下，逐一把拷贝的数据写成操作，记入重写日志。</p>
 <p>所以aof在重写时，在fork进程时是会阻塞住主线程的。</p>
 <p><strong>AOF日志何时会重写？</strong><br>有两个配置项控制AOF重写的触发：<br><code>auto-aof-rewrite-min-size</code>：表示运行AOF重写时文件的最小大小，默认为64MB。<br><code>auto-aof-rewrite-percentage</code>：这个值的计算方式是，当前aof文件大小和上一次重写后aof文件大小的差值，再除以上一次重写后aof文件大小。也就是当前aof文件比上一次重写后aof文件的增量大小，和上一次重写后aof文件大小的比值。</p>
-<p><strong>重写日志时，有新数据写入咋整？</strong><br><img src="/posts/27273/redis-aof%E9%87%8D%E5%86%99-%E9%87%8D%E5%86%99%E7%BC%93%E5%86%B2.jpg"></p>
-<p><strong>主线程fork出子进程时是如何复制内存数据的？</strong><br>fork采用操作系统提供的<strong>写时复制（copy on write）机制</strong>，就是为了避免一次性拷贝大量内存数据给子进程造成阻塞。fork子进程时，子进程时会拷贝父进程的页表，即虚实映射关系（虚拟内存和物理内存的映射索引表），而不会拷贝物理内存。这个拷贝会消耗大量cpu资源，并且拷贝完成前会阻塞主线程，阻塞时间取决于内存中的数据量，数据量越大，则内存页表越大。拷贝完成后，父子进程使用相同的内存地址空间。<br>但主进程是可以有数据写入的，这时候就会拷贝物理内存中的数据。</p>
+<p><strong>重写日志时，有新数据写入咋整？</strong><br>主线程fork出子进程重写aof日志；<br>子进程重写日志完成后，主线程追加aof日志缓冲；<br>替换日志文件。<br><img src="/posts/27273/redis-aof%E9%87%8D%E5%86%99-%E9%87%8D%E5%86%99%E7%BC%93%E5%86%B2.jpg"></p>
+<p><strong>主线程fork出子进程时是如何复制内存数据的？</strong><br>fork采用操作系统提供的<strong>写时复制（copy on write）机制</strong>，就是为了避免一次性拷贝大量内存数据给子进程造成阻塞。fork子进程时，子进程时会拷贝父进程的页表，即虚实映射关系（虚拟内存和物理内存的映射索引表），而不会拷贝物理内存。这个拷贝会消耗大量cpu资源，并且拷贝完成前会阻塞主线程，阻塞时间取决于内存中的数据量，数据量越大，则内存页表越大。拷贝完成后，父子进程使用相同的内存地址空间。</p>
+<p>但主进程是可以有数据写入的，这时候就会拷贝物理内存中的数据。如下图（进程1看做是主进程，进程2看做是子进程）：<br><img src="/posts/27273/redis-aof%E9%87%8D%E5%86%99-%E5%86%99%E6%97%B6%E5%A4%8D%E5%88%B6.png"><br>在主进程有数据写入时，而这个数据刚好在页c中，操作系统会创建这个页面的副本（页c的副本），即拷贝当前页的物理数据，将其映射到主进程中，而子进程还是使用原来的的页c。</p>
 <p><strong>在重写日志整个过程时，主线程有哪些地方会被阻塞？</strong></p>
 <ul>
 <li>fork子进程时，需要拷贝虚拟页表，会对主线程阻塞。</li>
