@@ -17,7 +17,8 @@
 <p>如果A happens-before B，则A的执行结果对B可见，并且A的执行顺序先于B。</p>
 <h3 id="JVM中锁的优化"><a href="#JVM中锁的优化" class="headerlink" title="JVM中锁的优化"></a>JVM中锁的优化</h3><p>简单来说在 JVM中 monitorenter 和 monitorexit 字节码依赖于底层的操作系统的 Mutex Lock 来实现的，但是由于使用 Mutex Lock 需要将当前线程挂起并从用户态切换到内核态来执行，这种切换的代价是非常昂贵的。<br>然而在现实中的大部分情况下，同步方法是运行在单线程环境(无锁竞争环境)如果每次都调用 Mutex Lock 那么将严重的影响程序的性能。</p>
 <p>在jdk1.6中对锁的实现引入了大量的优化，如锁粗化(Lock Coarsening)、锁消除(Lock Elimination)、轻量级锁(Lightweight Locking)、偏向锁(Biased Locking)、适应性自旋(Adaptive Spinning)等技术来减少锁操作的开销。</p>
-<h4 id="无锁-偏向锁-轻量级锁-重量级锁"><a href="#无锁-偏向锁-轻量级锁-重量级锁" class="headerlink" title="无锁 偏向锁 轻量级锁 重量级锁"></a>无锁 偏向锁 轻量级锁 重量级锁</h4><h4 id="自旋与自适应自旋"><a href="#自旋与自适应自旋" class="headerlink" title="自旋与自适应自旋"></a>自旋与自适应自旋</h4><p>自旋锁早在JDK1.4 中就引入了，只是当时默认时关闭的。在JDK 1.6后默认为开启状态，同时在JDK 1.6中引入了自适应自旋锁。</p>
+<h4 id="无锁-偏向锁-轻量级锁-重量级锁"><a href="#无锁-偏向锁-轻量级锁-重量级锁" class="headerlink" title="无锁 偏向锁 轻量级锁 重量级锁"></a>无锁 偏向锁 轻量级锁 重量级锁</h4><p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzkxNTE3NjQ3MA==&mid=2247488192&idx=1&sn=85fa12be29fef85d41c571b2c853de5d&scene=21#wechat_redirect">关于 Synchronized 的一个点</a></p>
+<h4 id="自旋与自适应自旋"><a href="#自旋与自适应自旋" class="headerlink" title="自旋与自适应自旋"></a>自旋与自适应自旋</h4><p>自旋锁早在JDK1.4 中就引入了，只是当时默认时关闭的。在JDK 1.6后默认为开启状态，同时在JDK 1.6中引入了自适应自旋锁。</p>
 <h4 id="锁消除"><a href="#锁消除" class="headerlink" title="锁消除"></a>锁消除</h4><p>锁消除是指虚拟机即时编译器在运行时，对一些代码上要求同步，但是被检测到不可能存在共享数据竞争的锁进行消除。</p>
 <p>锁消除的主要判定依据来源于逃逸分析的数据支持。<br>意思就是：JVM会判断在一段程序中的同步明显不会逃逸出去从而被其他线程访问到，那JVM就把它们当作栈上数据对待，认为这些数据是线程独有的，不需要加同步。此时就会进行锁消除。</p>
 <h4 id="锁粗化"><a href="#锁粗化" class="headerlink" title="锁粗化"></a>锁粗化</h4><p>原则上，我们都知道在加同步锁时，尽可能的将同步块的作用范围限制到尽量小的范围(只在共享数据的实际作用域中才进行同步，这样是为了使得需要同步的操作数量尽可能变小。在存在锁同步竞争中，也可以使得等待锁的线程尽早的拿到锁)。</p>
