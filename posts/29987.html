@@ -1,0 +1,115 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="人生到处知何似，应似飞鸿踏雪泥。泥上偶然留指爪，鸿飞那复计东西。"><title>高并发：限流 | frozeNwInd</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.0.0"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/normalize/latest/normalize.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/grids-responsive-min.min.css"><link rel="stylesheet" href="//lib.baomitu.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//lib.baomitu.com/jquery/latest/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement('script');
+  hm.src = 'https://hm.baidu.com/hm.js?' + 'bbf19a98c9ae28f2e1e8cfcee1d9585e';
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+  })();</script><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">高并发：限流</h1><a id="logo" href="/.">frozeNwInd</a><p class="description">吕乘风的博客</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/tags/"><i class="fa fa-tag"> 标签</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/history/"><i class="fa fa-history"> 历史</i></a><a href="/message/"><i class="fa fa-comment"> 留言</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">高并发：限流</h1><div class="post-meta">2023-06-19<span> | </span><span class="category"><a href="/categories/technology/">technology</a><a href="/categories/technology/%E6%9E%B6%E6%9E%84/">架构</a><a href="/categories/technology/%E6%9E%B6%E6%9E%84/%E9%AB%98%E5%B9%B6%E5%8F%91/">高并发</a></span></div><div class="post-content"><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><h3 id="什么是限流"><a href="#什么是限流" class="headerlink" title="什么是限流"></a>什么是限流</h3><p>在日常生活中限流很常见，例如去有些景区玩，每天售卖的门票数是有限的，例如 2000 张，即每天最多只有 2000 个人能进去游玩。<br>那在我们工程上限流是什么呢？限制的是 「流」，在不同场景下「流」的定义不同，可以是每秒请求数、每秒事务处理数、网络流量等等。</p>
+<p>而通常我们说的限流指代的是<strong>限制到达系统的并发请求数</strong>，使得系统能够正常的处理<strong>部分</strong>用户的请求，来保证系统的稳定性。</p>
+<p>限流不可避免的会造成用户的请求变慢或者被拒的情况，从而会影响用户体验。<br>因此限流是需要在用户体验和系统稳定性之间做平衡的，即我们常说的 <strong>trade off</strong>。</p>
+<p>限流也称流控（流量控制）。<br>每个系统都有服务的上线，所以当流量超过服务极限能力时，系统可能会出现卡死、崩溃的情况，所以就有了降级和限流。<br>限流其实就是：当高并发或者瞬时高并发时，为了保证系统的稳定性、可用性，系统以牺牲部分请求为代价或者延迟处理请求为代价，保证系统整体服务可用。</p>
+<h3 id="为什么要限流"><a href="#为什么要限流" class="headerlink" title="为什么要限流"></a>为什么要限流</h3><p>日常的业务上有类似秒杀活动、双十一大促或者突发新闻等场景，用户的流量突增，后端服务的处理能力是有限的，如果不能处理好突发流量，后端服务很容易就被打垮。<br>亦或是爬虫等不正常流量，我们对外暴露的服务都要以最大恶意去防备调用者。<br>我们不清楚调用者会如何调用我们的服务，假设某个调用者开几十个线程一天二十四小时疯狂调用你的服务，如果不做啥处理咱服务也算完了，更胜的还有DDos攻击。<br>还有对于很多第三方开放平台来说，不仅仅要防备不正常流量，还要保证资源的公平利用，一些接口都免费给你用了，资源都不可能一直都被你占着吧，别人也得调的。</p>
+<p>限流的本质是因为后端处理能力有限，需要截掉超过处理能力之外的请求，亦或是为了均衡客户端对服务端资源的公平调用，防止一些客户端饿死。</p>
+<h2 id="常见的限流算法"><a href="#常见的限流算法" class="headerlink" title="常见的限流算法"></a>常见的限流算法</h2><h3 id="1-计数器"><a href="#1-计数器" class="headerlink" title="1. 计数器"></a>1. 计数器</h3><p>最简单的限流算法就是计数限流了。</p>
+<p>例如系统能同时处理 100 个请求，保存一个计数器，处理了一个请求，计数器就加一，一个请求处理完毕之后计数器减一。<br>每次请求来的时候看看计数器的值，如果超过阈值就拒绝。<br>非常简单粗暴。</p>
+<p>计数器的值要是存内存中就算单机限流算法；如果放在第三方存储里，例如 Redis 中，集群机器访问就算分布式限流算法。</p>
+<p>优点就是：简单粗暴，单机在 Java 中可用 Atomic 等原子类、分布式就 Redis incr。<br>缺点就是：假设我们允许的阈值是1万，此时计数器的值为 0， 当 1 万个请求在前 1 秒内一股脑儿的都涌进来，这突发的流量可是顶不住的。<br>缓缓地增加流量处理和一下子涌入对于程序来说是不一样的。</p>
+<ul>
+<li>采用AtomicInteger<br>  <img src="/posts/29987/%E9%99%90%E6%B5%81%E7%AE%97%E6%B3%95-%E8%AE%A1%E6%95%B0%E5%99%A8-AtomicInteger%E4%BC%AA%E4%BB%A3%E7%A0%81.png"></li>
+<li>采用令牌Semaphore</li>
+<li>采用ThreadPoolExecutor java线程池</li>
+</ul>
+<h3 id="2-固定窗口"><a href="#2-固定窗口" class="headerlink" title="2. 固定窗口"></a>2. 固定窗口</h3><p>一般的限流都是为了限制在指定时间间隔内的访问量，因此还有个算法叫固定窗口。</p>
+<p>相比于计数限流主要是多了个时间窗口的概念，<strong>计数器每过一个时间窗口就重置</strong>。<br>规则如下：</p>
+<ul>
+<li>请求次数小于阈值，允许访问并且计数器 +1；</li>
+<li>请求次数大于阈值，拒绝访问；</li>
+<li>这个时间窗口过了之后，计数器清零；</li>
+</ul>
+<p><img src="/posts/29987/%E9%99%90%E6%B5%81%E7%AE%97%E6%B3%95-%E5%9B%BA%E5%AE%9A%E7%AA%97%E5%8F%A3-%E4%BC%AA%E4%BB%A3%E7%A0%81.png"></p>
+<h4 id="固定窗口临界问题"><a href="#固定窗口临界问题" class="headerlink" title="固定窗口临界问题"></a>固定窗口临界问题</h4><p>假设系统每秒允许 100 个请求，假设第一个时间窗口是 0-1s，在第 0.55s 处一下次涌入 100 个请求，过了 1 秒的时间窗口后计数清零，此时在 1.05 s 的时候又一下次涌入100个请求。<br>虽然窗口内的计数没超过阈值，但是全局来看在 0.55s-1.05s 这 0.1 秒内涌入了 200 个请求，这其实对于阈值是 100/s 的系统来说是无法接受的。<br><img src="/posts/29987/%E9%99%90%E6%B5%81%E7%AE%97%E6%B3%95-%E5%9B%BA%E5%AE%9A%E7%AA%97%E5%8F%A3-%E4%B8%B4%E7%95%8C%E9%97%AE%E9%A2%98.png"></p>
+<h3 id="3-滑动窗口"><a href="#3-滑动窗口" class="headerlink" title="3. 滑动窗口"></a>3. 滑动窗口</h3><p>滑动窗口限流解决固定窗口临界值的问题，可以保证在任意时间窗口内都不会超过阈值。<br>相对于固定窗口，滑动窗口除了需要引入计数器之外，还需要<strong>记录时间窗口内每个请求到达的时间点</strong>，因此<strong>对内存的占用会比较多</strong>。</p>
+<p>规则如下，假设时间窗口为 1 秒：</p>
+<ul>
+<li>记录每次请求的时间</li>
+<li>统计每次请求的时间 至 往前推1秒这个时间窗口内请求数，并且 1 秒前的数据可以删除。</li>
+<li>统计的请求数小于阈值就记录这个请求的时间，并允许通过，反之拒绝。</li>
+</ul>
+<p><img src="/posts/29987/%E9%99%90%E6%B5%81%E7%AE%97%E6%B3%95-%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3-%E7%A4%BA%E4%BE%8B%E5%9B%BE.png"><br><img src="/posts/29987/%E9%99%90%E6%B5%81%E7%AE%97%E6%B3%95-%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3-%E4%BC%AA%E4%BB%A3%E7%A0%81.png"></p>
+<h4 id="短时间内的流量暴击"><a href="#短时间内的流量暴击" class="headerlink" title="短时间内的流量暴击"></a>短时间内的流量暴击</h4><p>滑动窗口和固定窗口都<strong>无法解决短时间之内集中流量的突击</strong>。</p>
+<p>我们所想的限流场景是：<br>每秒限制 100 个请求。希望请求每 10ms 来一个，这样我们的流量处理就很平滑，但是真实场景很难控制请求的频率，因此可能存在 5ms 内就打满了阈值的情况。<br>当然对于这种情况还是有变型处理的，例如设置多条限流规则。不仅限制每秒 100 个请求，再设置每  10ms 不超过 2 个。</p>
+<p>多说一句，<strong>这个滑动窗口可与TCP的滑动窗口不一样</strong>。<br>TCP的滑动窗口是接收方告知发送方自己能接多少“货”，然后发送方控制发送的速率。</p>
+<h3 id="4-漏桶"><a href="#4-漏桶" class="headerlink" title="4. 漏桶"></a>4. 漏桶</h3><p>漏桶，它可以解决时间窗口类的痛点，使得流量更加平滑。</p>
+<p>如下图所示，水滴持续滴入漏桶中，底部定速流出。<br>如果水滴滴入的速率大于流出的速率，当存水超过桶的大小的时候就会溢出。</p>
+<p>规则如下：</p>
+<ul>
+<li>请求来了放入桶中</li>
+<li>桶内请求量满了拒绝请求</li>
+<li>服务定速从桶内拿请求处理</li>
+</ul>
+<p><img src="/posts/29987/%E9%99%90%E6%B5%81%E7%AE%97%E6%B3%95-%E6%BC%8F%E6%A1%B6-%E7%A4%BA%E4%BE%8B%E5%9B%BE.png"></p>
+<p>可以看到水滴对应的就是请求。<br>它的特点就是<strong>宽进严出</strong>，无论请求多少，请求的速率有多大，都按照固定的速率流出，对应的就是<strong>服务按照固定的速率处理请求</strong>。</p>
+<p>看到这想到啥，是不是和消息队列思想有点像，削峰填谷。<br>一般而言漏桶也是由<strong>队列</strong>来实现的，<strong>处理不过来的请求就排队，队列满了就开始拒绝请求</strong>。<br>看到这又想到啥，<strong>线程池</strong>不就是这样实现的嘛？</p>
+<p>经过漏洞这么一过滤，请求就能平滑的流出，看起来很像很挺完美的？实际上它的优点也即缺点。<br>面对<strong>突发请求</strong>，服务的处理速度和平时是一样的，这其实不是我们想要的。<br>在面对突发流量我们希望在系统平稳的同时，提升用户体验即能更快的处理请求，而不是和正常流量一样，循规蹈矩的处理（看看，之前滑动窗口说流量不够平滑，现在太平滑了又不行，难搞啊）。</p>
+<p>而<strong>令牌桶</strong>在应对<strong>突击流量</strong>的时候，可以更加的“激进”。</p>
+<h3 id="5-令牌桶算法"><a href="#5-令牌桶算法" class="headerlink" title="5. 令牌桶算法"></a>5. 令牌桶算法</h3><p>令牌桶其实和漏桶的原理类似，只不过<strong>漏桶是定速地流出</strong>，而<strong>令牌桶是定速地往桶里塞入令牌</strong>，然后请求只有拿到了令牌才能通过，之后再被服务器处理。<br>当然令牌桶的大小也是有限制的，假设桶里的令牌满了之后，定速生成的令牌会丢弃。</p>
+<p>规则：</p>
+<ul>
+<li>定速的往桶内放入令牌</li>
+<li>令牌数量超过桶的限制，丢弃</li>
+<li>请求来了先向桶内索要令牌，索要成功则通过被处理，反之拒绝</li>
+</ul>
+<p><img src="/posts/29987/%E9%99%90%E6%B5%81%E7%AE%97%E6%B3%95-%E4%BB%A4%E7%89%8C%E6%A1%B6-%E7%A4%BA%E4%BE%8B%E5%9B%BE.png"></p>
+<p>看到这又想到啥？<strong>Semaphore信号量</strong>，信号量可控制某个资源被同时访问的个数，其实和咱们拿令牌思想一样，一个是拿信号量，一个是拿令牌。<br>只不过信号量用完了返还，而咱们令牌用了不归还，因为令牌会定时再填充。</p>
+<p>应对突发流量的时候，桶内假如有 100 个令牌，那么这 100 个令牌可以马上被取走，而不像漏桶那样匀速的消费。<br>所以<strong>在应对突发流量的时候令牌桶表现的更佳</strong>。</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><ul>
+<li>拿<strong>令牌桶</strong>来说<ul>
+<li>假设你没预热，那是不是上线时候桶里没令牌？没令牌请求过来不就直接拒了么？这就误杀了，明明系统没啥负载现在。</li>
+<li>再比如说请求的访问其实是随机的，假设令牌桶每20ms放入一个令牌，桶内初始没令牌，这请求就刚好在第一个20ms内有两个请求，再过20ms里面没请求，其实从40ms来看只有2个请求，应该都放行的，而有一个请求就直接被拒了。</li>
+<li>这就有可能造成很多请求的误杀，但是如果看监控曲线的话，好像流量很平滑，峰值也控制的很好。</li>
+</ul>
+</li>
+<li>再拿<strong>漏桶</strong>来说，漏桶中请求是暂时存在桶内的，这其实<strong>不符合互联网业务低延迟的要求</strong>。</li>
+</ul>
+<h4 id="限流组件"><a href="#限流组件" class="headerlink" title="限流组件"></a>限流组件</h4><p>一般而言，我们不需要自己实现限流算法来达到限流的目的，不管是接入层限流还是细粒度的接口限流，都有现成的轮子使用，其实现也是用了上述我们所说的限流算法。</p>
+<ul>
+<li>Google Guava 提供的限流工具类 RateLimiter，是基于令牌桶实现的，并且扩展了算法，支持预热功能。</li>
+<li>阿里开源的限流框架Sentinel 中的匀速排队限流策略，就采用了漏桶算法。</li>
+<li>Nginx 中的限流模块 limit_req_zone，采用了漏桶算法。</li>
+<li>OpenResty 中的 resty.limit.req库等等。</li>
+</ul>
+<h2 id="单机-amp-分布式"><a href="#单机-amp-分布式" class="headerlink" title="单机 &amp; 分布式"></a>单机 &amp; 分布式</h2><p>本质上单机限流和分布式限流的区别其实就在于 <strong>“阈值”</strong> 存放的位置。</p>
+<p>单机限流就上面所说的算法直接在单台服务器上实现就好了，而往往我们的服务是集群部署的。<br>因此需要多台机器协同提供限流功能。</p>
+<h3 id="单机限流"><a href="#单机限流" class="headerlink" title="单机限流"></a>单机限流</h3><p>应用级限流方式只是单应用内的请求限流，不能进行全局限流。</p>
+<ul>
+<li>限流总资源数</li>
+<li>限流总并发/连接/请求数</li>
+<li>限流某个接口的总并发/请求数</li>
+<li>限流某个接口的时间窗请求数</li>
+<li>平滑限流某个接口的请求数</li>
+<li>Guava RateLimiter</li>
+</ul>
+<h3 id="分布式限流"><a href="#分布式限流" class="headerlink" title="分布式限流"></a>分布式限流</h3><p>我们需要<strong>分布式限流</strong>和<strong>接入层限流</strong>来进行全局限流。</p>
+<ul>
+<li>redis+lua实现中的lua脚本</li>
+<li>使用Nginx+Lua实现的Lua脚本</li>
+<li>使用 OpenResty 开源的限流方案</li>
+<li>限流框架，比如Sentinel实现降级限流熔断</li>
+</ul>
+</div><div class="tags"><a href="/tags/高并发"><i class="fa fa-tag">高并发</i></a><a href="/tags/限流"><i class="fa fa-tag">限流</i></a></div><div class="post-nav"><a class="next" href="/posts/6790.html">Java基础-注解</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+  clientID: '8359b7a19b78f2b9e112',
+  clientSecret: '5ad69dc1633a1834322067d017b6313bd231457c',
+  repo: 'gitalk',
+  owner: 'Th3Crave',
+  admin: ['Th3Crave'],
+  id: md5(location.pathname),
+  distractionFreeMode: false
+})
+gitalk.render('container')
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E9%99%90%E6%B5%81"><span class="toc-text">什么是限流</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E9%99%90%E6%B5%81"><span class="toc-text">为什么要限流</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E7%9A%84%E9%99%90%E6%B5%81%E7%AE%97%E6%B3%95"><span class="toc-text">常见的限流算法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E8%AE%A1%E6%95%B0%E5%99%A8"><span class="toc-text">1. 计数器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%9B%BA%E5%AE%9A%E7%AA%97%E5%8F%A3"><span class="toc-text">2. 固定窗口</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9B%BA%E5%AE%9A%E7%AA%97%E5%8F%A3%E4%B8%B4%E7%95%8C%E9%97%AE%E9%A2%98"><span class="toc-text">固定窗口临界问题</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3"><span class="toc-text">3. 滑动窗口</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%9F%AD%E6%97%B6%E9%97%B4%E5%86%85%E7%9A%84%E6%B5%81%E9%87%8F%E6%9A%B4%E5%87%BB"><span class="toc-text">短时间内的流量暴击</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E6%BC%8F%E6%A1%B6"><span class="toc-text">4. 漏桶</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E4%BB%A4%E7%89%8C%E6%A1%B6%E7%AE%97%E6%B3%95"><span class="toc-text">5. 令牌桶算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-text">小结</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%99%90%E6%B5%81%E7%BB%84%E4%BB%B6"><span class="toc-text">限流组件</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%95%E6%9C%BA-amp-%E5%88%86%E5%B8%83%E5%BC%8F"><span class="toc-text">单机 &amp; 分布式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%95%E6%9C%BA%E9%99%90%E6%B5%81"><span class="toc-text">单机限流</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E9%99%90%E6%B5%81"><span class="toc-text">分布式限流</span></a></li></ol></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+  search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>
