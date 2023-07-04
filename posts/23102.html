@@ -18,7 +18,15 @@
 <li>对象序列化反序列化<br>ObjectInputStream、ObjectOutputStream</li>
 <li>转换<br>InputStreamReader、OutputStreamWriter</li>
 </ul>
-<h2 id="Java-IO的设计模式-装饰者模式"><a href="#Java-IO的设计模式-装饰者模式" class="headerlink" title="Java IO的设计模式 - 装饰者模式"></a>Java IO的设计模式 - 装饰者模式</h2><h2 id="Java-IO源码-InputStream"><a href="#Java-IO源码-InputStream" class="headerlink" title="Java IO源码 - InputStream"></a>Java IO源码 - InputStream</h2><h2 id="Java-IO源码-OutputStream"><a href="#Java-IO源码-OutputStream" class="headerlink" title="Java IO源码 - OutputStream"></a>Java IO源码 - OutputStream</h2><h2 id="IO模型-Unix-IO模型"><a href="#IO模型-Unix-IO模型" class="headerlink" title="IO模型 - Unix IO模型"></a>IO模型 - Unix IO模型</h2><h3 id="Unix的5种IO模型"><a href="#Unix的5种IO模型" class="headerlink" title="Unix的5种IO模型"></a>Unix的5种IO模型</h3><h4 id="阻塞I-O-blocking-IO"><a href="#阻塞I-O-blocking-IO" class="headerlink" title="阻塞I/O     blocking IO"></a>阻塞I/O     blocking IO</h4><p>应用进程被阻塞，直到数据复制到应用进程缓冲区中才返回。<br>应该注意到，在阻塞的过程中，其它程序还可以执行，因此阻塞不意味着整个操作系统都被阻塞。因为其他程序还可以执行，因此不消耗 CPU 时间，这种模型的执行效率会比较高。</p>
+<h2 id="Java-IO的设计模式-装饰者模式"><a href="#Java-IO的设计模式-装饰者模式" class="headerlink" title="Java IO的设计模式 - 装饰者模式"></a>Java IO的设计模式 - 装饰者模式</h2><h2 id="Java-IO源码-InputStream"><a href="#Java-IO源码-InputStream" class="headerlink" title="Java IO源码 - InputStream"></a>Java IO源码 - InputStream</h2><h2 id="Java-IO源码-OutputStream"><a href="#Java-IO源码-OutputStream" class="headerlink" title="Java IO源码 - OutputStream"></a>Java IO源码 - OutputStream</h2><h2 id="IO模型-Unix-IO模型"><a href="#IO模型-Unix-IO模型" class="headerlink" title="IO模型 - Unix IO模型"></a>IO模型 - Unix IO模型</h2><ul>
+<li><p>阻塞与非阻塞<br>应用程序级别的概念。<br>阻塞与非阻塞是应用程序访问某一资源时候，该资源没有准备就绪时应用程序的处理方式。<br>关注的是发起请求之后等待数据返回时的状态。</p>
+<p>被挂起无法执行其他操作的应用程序是阻塞型的；<br>可以立即去进行其他作业的应用程序是非阻塞型的。</p>
+</li>
+<li><p>同步与异步<br>操作系统级别的。<br>是否是同步还是异步，关注的是任务完成时消息通知的方式。</p>
+<p>由调用方（应用程序）主动问询的方式是同步调用；<br>由被调用方（操作系统内核）主动通知调用方（应用程序）任务已完成的方式是异步调用。</p>
+</li>
+</ul>
+<h3 id="Unix的5种IO模型"><a href="#Unix的5种IO模型" class="headerlink" title="Unix的5种IO模型"></a>Unix的5种IO模型</h3><h4 id="阻塞I-O-blocking-IO"><a href="#阻塞I-O-blocking-IO" class="headerlink" title="阻塞I/O     blocking IO"></a>阻塞I/O     blocking IO</h4><p>应用进程被阻塞，直到数据复制到应用进程缓冲区中才返回。<br>应该注意到，在阻塞的过程中，其它程序还可以执行，因此阻塞不意味着整个操作系统都被阻塞。因为其他程序还可以执行，因此不消耗 CPU 时间，这种模型的执行效率会比较高。</p>
 <p>下图中，recvfrom 用于接收 Socket 传来的数据，并复制到应用进程的缓冲区 buf 中。这里把 recvfrom() 当成系统调用。<br><img src="/posts/23102/io%E6%A8%A1%E5%9E%8B-%E9%98%BB%E5%A1%9Eio.png"></p>
 <h4 id="非阻塞I-O-nonblocking-I-O"><a href="#非阻塞I-O-nonblocking-I-O" class="headerlink" title="非阻塞I/O   nonblocking I/O"></a>非阻塞I/O   nonblocking I/O</h4><p>应用进程执行系统调用之后，内核返回一个错误码。应用进程可以继续执行，但是需要不断的执行系统调用来获知 I/O 是否完成，这种方式称为轮询(polling)。<br>由于 CPU 要处理更多的系统调用，因此这种模型是比较低效的。<br><img src="/posts/23102/io%E6%A8%A1%E5%9E%8B-%E9%9D%9E%E9%98%BB%E5%A1%9Eio.png"></p>
 <h4 id="I-O复用-I-O-multiplexing"><a href="#I-O复用-I-O-multiplexing" class="headerlink" title="I/O复用     I/O multiplexing"></a>I/O复用     I/O multiplexing</h4><p>使用 select 或者 poll 等待数据，并且可以等待多个套接字中的任何一个变为可读，这一过程会被阻塞，当某一个套接字可读时返回。之后再使用 recvfrom 把数据从内核复制到进程中。<br>它可以让单个进程具有处理多个 I/O 事件的能力。又被称为 Event Driven I/O，即事件驱动 I/O。<br>如果一个 Web 服务器没有 I/O 复用，那么每一个 Socket 连接都需要创建一个线程去处理。如果同时有几万个连接，那么就需要创建相同数量的线程。并且相比于多进程和多线程技术，I/O 复用不需要进程线程创建和切换的开销，系统开销更小。<br><img src="/posts/23102/io%E6%A8%A1%E5%9E%8B-io%E5%A4%8D%E7%94%A8.png"></p>
