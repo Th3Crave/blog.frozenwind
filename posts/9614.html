@@ -85,28 +85,55 @@
 <li>D-持久性；持久性通过redo log实现；</li>
 </ul>
 <h3 id="MySQL-InnoDB的事务隔离级别的实现原理"><a href="#MySQL-InnoDB的事务隔离级别的实现原理" class="headerlink" title="MySQL InnoDB的事务隔离级别的实现原理"></a>MySQL InnoDB的事务隔离级别的实现原理</h3><p>标准SQL事务隔离级别的实现是依赖锁的。<br>InnoDB使用不同的锁策略(Locking Strategy)以及MVCC机制来实现不同的隔离级别。</p>
-<h4 id="读未提交-Read-UnCommitted"><a href="#读未提交-Read-UnCommitted" class="headerlink" title="读未提交 Read UnCommitted"></a>读未提交 Read UnCommitted</h4><p>事务对当前被读取的数据不加锁，都是<code>当前读</code>。<br>事务在更新某数据的瞬间，对其加行级共享锁，直到事务结束才释放。</p>
-<h4 id="读已提交-Read-Committed"><a href="#读已提交-Read-Committed" class="headerlink" title="读已提交 Read Committed"></a>读已提交 Read Committed</h4><p>事务对当前被读取的数据不加锁，且是<code>快照读</code>。<br>事务在更新某数据的瞬间，对其加行级排他锁（Record Lock），直到事务结束才释放。</p>
-<p>通过快照读，MySQL InnoDB在RC级别就解决了不可重复读的问题。</p>
-<h4 id="可重复读-Repeatable-Read"><a href="#可重复读-Repeatable-Read" class="headerlink" title="可重复读 Repeatable Read"></a>可重复读 Repeatable Read</h4><p>事务对当前被读取的数据不加锁，且是<code>快照读</code>。<br>事务在更新某数据的瞬间，对其加行级排他锁（Record + gap = next-key lock），直到事务结束才释放。</p>
-<p>通过临键锁，MySQL InnoDB在RR级别解决了幻读。</p>
-<h4 id="序列化读"><a href="#序列化读" class="headerlink" title="序列化读"></a>序列化读</h4><p>事务在读取数据时，必须先对其加表级共享锁，直到事务结束才释放，都是<code>当前读</code>。<br>事务在更新数据时，必须先对其加表级排他锁，直到事务结束才释放。</p>
-<h2 id="MySQL-InnoDB的MVCC实现机制"><a href="#MySQL-InnoDB的MVCC实现机制" class="headerlink" title="MySQL InnoDB的MVCC实现机制"></a>MySQL InnoDB的MVCC实现机制</h2><h3 id="什么是MVCC"><a href="#什么是MVCC" class="headerlink" title="什么是MVCC"></a>什么是MVCC</h3><p>MVCC，全称Multi-Version Concurrency Control，即多版本并发控制。<br>MVCC是一种并发控制的方法，一般在数据库管理系统中，实现对数据库的并发访问，在编程语言中实现事务内存。</p>
-<p>MVCC在MySQL InnoDB中的实现主要是为了提高数据库并发性能，用不加锁的方式去处理读-写冲突，<code>实现读-写冲突不加锁</code>。</p>
-<h3 id="什么是MySQL-InnoDB下的当前读和快照读"><a href="#什么是MySQL-InnoDB下的当前读和快照读" class="headerlink" title="什么是MySQL InnoDB下的当前读和快照读"></a>什么是MySQL InnoDB下的当前读和快照读</h3><p>快照读和当前读都是针对于某一行数据记录来说的。</p>
-<h4 id="当前读"><a href="#当前读" class="headerlink" title="当前读"></a>当前读</h4><p>读取的是最新版本。<br>像<code>UPDATE、DELETE、INSERT、SELECT ...  LOCK IN SHARE MODE</code>、<code>SELECT ... FOR UPDATE</code>这些操作都是一种当前读。</p>
-<p>为什么叫当前读？就是它读取的是记录的最新版本，读取时还要保证其他并发事务不能修改当前记录，会对读取的记录进行加锁。</p>
-<h4 id="快照读"><a href="#快照读" class="headerlink" title="快照读"></a>快照读</h4><p>读取的是快照版本，也就是历史版本。<br>像不加锁的SELECT操作就是快照读，即不加锁的非阻塞读。</p>
-<p>快照读的前提是隔离级别不是未提交读和序列化读级别。<br>因为未提交读总是读取最新的数据行，而不是符合当前事务版本的数据行；而序列化读则会对表加锁，退化成当前读。</p>
-<h4 id="当前读，快照读和MVCC的关系"><a href="#当前读，快照读和MVCC的关系" class="headerlink" title="当前读，快照读和MVCC的关系"></a>当前读，快照读和MVCC的关系</h4><h3 id="MVCC实现原理"><a href="#MVCC实现原理" class="headerlink" title="MVCC实现原理"></a>MVCC实现原理</h3><blockquote>
-<p>MVCC的目的就是多版本并发控制，在数据库中的实现，就是为了解决读写冲突，它的实现原理主要是依赖记录中的 4个隐式字段，undo日志 ，Read View 来实现的。</p>
-</blockquote>
-<h4 id="4个隐式字段"><a href="#4个隐式字段" class="headerlink" title="4个隐式字段"></a>4个隐式字段</h4><p>每行记录除了我们自定义的字段外，还有数据库隐式定义的DB_TRX_ID,DB_ROLL_PTR,DB_ROW_ID等字段</p>
+<ol>
+<li><p>读未提交 Read UnCommitted<br> 事务对当前被读取的数据不加锁，都是<code>当前读</code>。<br> 事务在更新某数据的瞬间，对其加行级共享锁，直到事务结束才释放。</p>
+</li>
+<li><p>读已提交 Read Committed<br> 事务对当前被读取的数据不加锁，且是<code>快照读</code>。<br> 事务在更新某数据的瞬间，对其加行级排他锁（Record Lock），直到事务结束才释放。</p>
+</li>
+<li><p>可重复读 Repeatable Read<br> 事务对当前被读取的数据不加锁，且是<code>快照读</code>。<br> 事务在更新某数据的瞬间，对其加行级排他锁（Record + gap = next-key lock），直到事务结束才释放。</p>
 <ul>
-<li>DB_ROW_ID 6byte, 隐含的自增ID（隐藏主键），如果数据表没有主键，InnoDB会自动以DB_ROW_ID产生一个聚簇索引</li>
-<li>DB_TRX_ID 6byte, 最近修改(修改/插入)事务ID，记录创建这条记录/最后一次修改该记录的事务ID</li>
-<li>DB_ROLL_PTR 7byte, 回滚指针，用于配合undo日志，指向这条记录的上一个版本（存储于rollback segment里）</li>
-<li>DELETED_BIT 1byte, 记录被更新或删除并不代表真的删除，而是删除flag变了</li>
+<li><strong>RR级别</strong>是通过<strong>MVCC</strong>实现的。</li>
+<li>通过<strong>临键锁</strong>，MySQL InnoDB在<strong>RR级别</strong>解决了<strong>幻读</strong>。</li>
+</ul>
+</li>
+<li><p>序列化<br> 事务在<strong>读取数据(读)<strong>时，必须先对其加</strong>表级共享锁</strong>，直到事务结束才释放，都是<code>当前读</code>。<br> 事务在<strong>更新数据(写)<strong>时，必须先对其加</strong>表级排他锁</strong>，直到事务结束才释放。</p>
+</li>
+</ol>
+<h2 id="MySQL-InnoDB的MVCC实现机制"><a href="#MySQL-InnoDB的MVCC实现机制" class="headerlink" title="MySQL InnoDB的MVCC实现机制"></a>MySQL InnoDB的MVCC实现机制</h2><h3 id="什么是MVCC"><a href="#什么是MVCC" class="headerlink" title="什么是MVCC"></a>什么是MVCC</h3><p>MVCC，全称Multi-Version Concurrency Control，即多版本并发控制。<br>MVCC是一种并发控制的方法，一般在数据库管理系统中，实现对数据库的并发访问，在编程语言中实现事务内存。</p>
+<p>MVCC在MySQL InnoDB中的实现主要是为了提高数据库并发性能，用不加锁的方式去处理读-写冲突，<code>实现读-写冲突不加锁</code>。<br>实现了MySQL在InnoDB引擎中<strong>RC级别和RR级别</strong>下对数据库的并发访问，<strong>每次select操作会访问数据库中的版本链记录</strong>，其他事务可以修改这条记录，而select根据当前隔离级别去版本链中找到对应的版本记录，实现了读-写、写-读的并发执行，提升了系统的性能。</p>
+<h3 id="什么是MySQL-InnoDB下的当前读和快照读"><a href="#什么是MySQL-InnoDB下的当前读和快照读" class="headerlink" title="什么是MySQL InnoDB下的当前读和快照读"></a>什么是MySQL InnoDB下的当前读和快照读</h3><p>快照读和当前读都是针对于某一行数据记录来说的。</p>
+<ul>
+<li><p><strong>当前读</strong></p>
+<ul>
+<li><code>UPDATE</code></li>
+<li><code>DELETE</code></li>
+<li><code>INSERT</code></li>
+<li><code>SELECT ...  LOCK IN SHARE MODE</code></li>
+<li><code>SELECT ... FOR UPDATE</code></li>
+</ul>
+<p>  为什么叫当前读？就是它读取的是记录的最新版本，读取时还要保证其他并发事务不能修改当前记录，会对读取的记录进行加锁。</p>
+</li>
+<li><p><strong>快照读</strong><br>  读取的是快照版本，也就是历史版本。<br>  像不加锁的SELECT操作就是快照读，即不加锁的非阻塞读。</p>
+<p>  快照读的前提是隔离级别不是未提交读和序列化读级别。<br>  因为未提交读总是读取最新的数据行，而不是符合当前事务版本的数据行；而序列化读则会对表加锁，退化成当前读。</p>
+</li>
+</ul>
+<h4 id="当前读、快照读和MVCC的关系"><a href="#当前读、快照读和MVCC的关系" class="headerlink" title="当前读、快照读和MVCC的关系"></a>当前读、快照读和MVCC的关系</h4><h3 id="MVCC实现原理"><a href="#MVCC实现原理" class="headerlink" title="MVCC实现原理"></a>MVCC实现原理</h3><blockquote>
+<p>MVCC的目的就是多版本并发控制，在数据库中的实现，就是为了解决读写冲突，它的实现原理主要是依赖记录中的 4个隐式字段、undo日志、Read View 来实现的。</p>
+</blockquote>
+<h4 id="Read-View"><a href="#Read-View" class="headerlink" title="Read View"></a>Read View</h4><p>什么是Read View，说白了Read View就是事务进行快照读操作的时候生产的读视图(Read View)，在该事务执行的快照读的那一刻，会生成数据库系统当前的一个快照，记录并维护系统当前活跃事务的ID(当每个事务开启时，都会被分配一个ID, 这个ID是递增的，所以最新的事务，ID值越大)。</p>
+<p>本质是一个数据结构，包括以下几个部分：</p>
+<ul>
+<li>m_ids<br>  当前活跃的事务ID集合（开启但未提交的事务ID）；</li>
+<li>min_trx_ids<br>  最小活跃事务ID，小于它说明事务已经提交；</li>
+<li>max_trx_ids<br>  预分配的事务ID（下一个事务开启分配的事务ID），即当前最大事务ID+1，大于它说明该事务是ReadView生成之后才开启；</li>
+<li>creator_ids<br>  ReadView创建者的事务编号；</li>
+</ul>
+<h4 id="4个隐式字段-版本链"><a href="#4个隐式字段-版本链" class="headerlink" title="4个隐式字段 - 版本链"></a>4个隐式字段 - 版本链</h4><p>每行记录除了我们自定义的字段外，还有数据库隐式定义的<strong>DB_TRX_ID、DB_ROLL_PTR、DB_ROW_ID</strong>等字段</p>
+<ul>
+<li>DB_ROW_ID 6byte<br>  隐含的自增ID（隐藏主键），如果数据表没有主键，InnoDB会自动以DB_ROW_ID产生一个聚簇索引</li>
+<li><strong>DB_TRX_ID</strong> 6byte<br>  <strong>最近修改(修改/插入)事务ID</strong>，记录创建这条记录/最后一次修改该记录的事务ID</li>
+<li><strong>DB_ROLL_PTR</strong> 7byte<br>  <strong>回滚指针</strong>，用于配合undo日志，指向这条记录的上一个版本（存储于rollback segment里）</li>
+<li>DELETED_BIT 1byte<br>  记录被更新或删除并不代表真的删除，而是删除flag变了</li>
 </ul>
 <h4 id="undo日志"><a href="#undo日志" class="headerlink" title="undo日志"></a>undo日志</h4><p>InnoDB把这些为了回滚而记录的这些东西称之为undo log。<br>这里需要注意的一点是，由于查询操作（SELECT）并不会修改任何用户记录，所以在查询操作执行时，并不需要记录相应的undo log。</p>
 <p>undo log主要分为3种：</p>
@@ -119,13 +146,21 @@
 </ul>
 </li>
 </ul>
-<h4 id="Read-View"><a href="#Read-View" class="headerlink" title="Read View"></a>Read View</h4><p>什么是Read View，说白了Read View就是事务进行快照读操作的时候生产的读视图(Read View)，在该事务执行的快照读的那一刻，会生成数据库系统当前的一个快照，记录并维护系统当前活跃事务的ID(当每个事务开启时，都会被分配一个ID, 这个ID是递增的，所以最新的事务，ID值越大)</p>
-<h4 id="整体流程"><a href="#整体流程" class="headerlink" title="整体流程"></a>整体流程</h4><h3 id="MVCC相关问题"><a href="#MVCC相关问题" class="headerlink" title="MVCC相关问题"></a>MVCC相关问题</h3><h4 id="RC、RR级别下的InnoDB快照读有什么不同"><a href="#RC、RR级别下的InnoDB快照读有什么不同" class="headerlink" title="RC、RR级别下的InnoDB快照读有什么不同"></a>RC、RR级别下的InnoDB快照读有什么不同</h4><p>正是Read View生成时机的不同，从而造成RC、RR级别下快照读的结果的不同</p>
+<h4 id="整体流程"><a href="#整体流程" class="headerlink" title="整体流程"></a>整体流程</h4><p>事务根据生成的ReadView去版本链中寻找自己能够访问的数据，最后得到所读的数据。</p>
+<p>而这个寻找可读数据的规则就至关重要了，判断规则如下：</p>
+<ol>
+<li>当前记录修改操作事务ID 等于 ReadView创建事务ID ? 等于说明是自身事务修改的数据，可以访问；</li>
+<li>判断 trx_id &lt; min_trx_id(2) ? 如果小于说明事务提交了，可以访问；</li>
+<li>判断 trx_id &gt;= max_trx_id(5) ? 成立说明该事物是在ReadView生成之后才开启的，不允许访问，不成立继续向下判断；</li>
+<li>判断 min_trx_id &lt;= trx_id &lt; max_trx_id ？成立则在m_ids中对比，如果不存在说明事务已经提交，可以访问；</li>
+<li>不满足以上条件，根据回滚指针依次往前一个版本数据查找，直到找到满足条件的数据；</li>
+</ol>
+<h3 id="MVCC相关问题"><a href="#MVCC相关问题" class="headerlink" title="MVCC相关问题"></a>MVCC相关问题</h3><h4 id="RC、RR级别下的InnoDB快照读有什么不同"><a href="#RC、RR级别下的InnoDB快照读有什么不同" class="headerlink" title="RC、RR级别下的InnoDB快照读有什么不同"></a>RC、RR级别下的InnoDB快照读有什么不同</h4><p>正是<strong>Read View生成时机的不同</strong>，从而造成RC、RR级别下快照读的结果的不同。</p>
 <ul>
 <li>RR快照读<br>  在RR级别下的某个事务的对某条记录的第一次快照读会创建一个快照及Read View, 将当前系统活跃的其他事务记录起来，此后在调用快照读的时候，还是使用的是同一个Read View，所以只要当前事务在其他事务提交更新之前使用过快照读，那么之后的快照读使用的都是同一个Read View，所以对之后的修改不可见。<br>  即RR级别下，快照读生成Read View时，Read View会记录此时所有其他活动事务的快照，这些事务的修改对于当前事务都是不可见的。而早于Read View创建的事务所做的修改均是可见。</li>
 <li>RC快照读<br>  在RC级别下的事务中，每次快照读都会新生成一个快照和Read View, 这就是我们在RC级别下的事务中可以看到别的事务提交的更新的原因。</li>
 </ul>
-<p>总之，<br>在RC隔离级别下，是每个快照读都会生成并获取最新的Read View；<br>而在RR隔离级别下，则是同一个事务中的第一个快照读才会创建Read View, 之后的快照读获取的都是同一个Read View。</p>
+<p>总之，<br>在RC隔离级别下，是每个快照读都会生成并获取最新的Read View，因此会出现不可重复读问题；<br>而在RR隔离级别下，则是同一个事务中的第一个快照读才会创建Read View, 之后的快照读获取的都是同一个Read View。</p>
 </div><div class="tags"><a href="/tags/MySQL"><i class="fa fa-tag">MySQL</i></a></div><div class="post-nav"><a class="pre" href="/posts/31020.html">Java并发和多线程-JUC工具类-CyclicBarrier</a><a class="next" href="/posts/16860.html">Java并发和多线程-JUC工具类-Semaphore</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
   clientID: '8359b7a19b78f2b9e112',
   clientSecret: '5ad69dc1633a1834322067d017b6313bd231457c',
@@ -136,7 +171,7 @@
   distractionFreeMode: false
 })
 gitalk.render('container')
-</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BA%8B%E5%8A%A1"><span class="toc-text">数据库事务</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ACID%E7%89%B9%E6%80%A7"><span class="toc-text">ACID特性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%87%E5%87%86%E4%BA%8B%E5%8A%A1%E7%9A%84%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB"><span class="toc-text">标准事务的隔离级别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E5%B9%B6%E5%8F%91%E9%97%AE%E9%A2%98"><span class="toc-text">事务的并发问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E5%B9%B6%E5%8F%91%E5%9C%BA%E6%99%AF"><span class="toc-text">事务并发场景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B9%B6%E5%8F%91%E9%97%AE%E9%A2%98%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="toc-text">并发问题的解决方案</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MySQL-InnoDB%E4%BA%8B%E5%8A%A1%E5%8E%9F%E7%90%86"><span class="toc-text">MySQL InnoDB事务原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#MySQL-InnoDB%E4%BA%8B%E5%8A%A1%E7%89%B9%E6%80%A7%E5%AE%9E%E7%8E%B0"><span class="toc-text">MySQL InnoDB事务特性实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MySQL-InnoDB%E7%9A%84%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="toc-text">MySQL InnoDB的事务隔离级别的实现原理</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%AF%BB%E6%9C%AA%E6%8F%90%E4%BA%A4-Read-UnCommitted"><span class="toc-text">读未提交 Read UnCommitted</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%AF%BB%E5%B7%B2%E6%8F%90%E4%BA%A4-Read-Committed"><span class="toc-text">读已提交 Read Committed</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8F%AF%E9%87%8D%E5%A4%8D%E8%AF%BB-Repeatable-Read"><span class="toc-text">可重复读 Repeatable Read</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BA%8F%E5%88%97%E5%8C%96%E8%AF%BB"><span class="toc-text">序列化读</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MySQL-InnoDB%E7%9A%84MVCC%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6"><span class="toc-text">MySQL InnoDB的MVCC实现机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFMVCC"><span class="toc-text">什么是MVCC</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFMySQL-InnoDB%E4%B8%8B%E7%9A%84%E5%BD%93%E5%89%8D%E8%AF%BB%E5%92%8C%E5%BF%AB%E7%85%A7%E8%AF%BB"><span class="toc-text">什么是MySQL InnoDB下的当前读和快照读</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BD%93%E5%89%8D%E8%AF%BB"><span class="toc-text">当前读</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BF%AB%E7%85%A7%E8%AF%BB"><span class="toc-text">快照读</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BD%93%E5%89%8D%E8%AF%BB%EF%BC%8C%E5%BF%AB%E7%85%A7%E8%AF%BB%E5%92%8CMVCC%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-text">当前读，快照读和MVCC的关系</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MVCC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="toc-text">MVCC实现原理</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4%E4%B8%AA%E9%9A%90%E5%BC%8F%E5%AD%97%E6%AE%B5"><span class="toc-text">4个隐式字段</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#undo%E6%97%A5%E5%BF%97"><span class="toc-text">undo日志</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Read-View"><span class="toc-text">Read View</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%95%B4%E4%BD%93%E6%B5%81%E7%A8%8B"><span class="toc-text">整体流程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MVCC%E7%9B%B8%E5%85%B3%E9%97%AE%E9%A2%98"><span class="toc-text">MVCC相关问题</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#RC%E3%80%81RR%E7%BA%A7%E5%88%AB%E4%B8%8B%E7%9A%84InnoDB%E5%BF%AB%E7%85%A7%E8%AF%BB%E6%9C%89%E4%BB%80%E4%B9%88%E4%B8%8D%E5%90%8C"><span class="toc-text">RC、RR级别下的InnoDB快照读有什么不同</span></a></li></ol></li></ol></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BA%8B%E5%8A%A1"><span class="toc-text">数据库事务</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ACID%E7%89%B9%E6%80%A7"><span class="toc-text">ACID特性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%87%E5%87%86%E4%BA%8B%E5%8A%A1%E7%9A%84%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB"><span class="toc-text">标准事务的隔离级别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E5%B9%B6%E5%8F%91%E9%97%AE%E9%A2%98"><span class="toc-text">事务的并发问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E5%B9%B6%E5%8F%91%E5%9C%BA%E6%99%AF"><span class="toc-text">事务并发场景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B9%B6%E5%8F%91%E9%97%AE%E9%A2%98%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="toc-text">并发问题的解决方案</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MySQL-InnoDB%E4%BA%8B%E5%8A%A1%E5%8E%9F%E7%90%86"><span class="toc-text">MySQL InnoDB事务原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#MySQL-InnoDB%E4%BA%8B%E5%8A%A1%E7%89%B9%E6%80%A7%E5%AE%9E%E7%8E%B0"><span class="toc-text">MySQL InnoDB事务特性实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MySQL-InnoDB%E7%9A%84%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="toc-text">MySQL InnoDB的事务隔离级别的实现原理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MySQL-InnoDB%E7%9A%84MVCC%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6"><span class="toc-text">MySQL InnoDB的MVCC实现机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFMVCC"><span class="toc-text">什么是MVCC</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFMySQL-InnoDB%E4%B8%8B%E7%9A%84%E5%BD%93%E5%89%8D%E8%AF%BB%E5%92%8C%E5%BF%AB%E7%85%A7%E8%AF%BB"><span class="toc-text">什么是MySQL InnoDB下的当前读和快照读</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BD%93%E5%89%8D%E8%AF%BB%E3%80%81%E5%BF%AB%E7%85%A7%E8%AF%BB%E5%92%8CMVCC%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-text">当前读、快照读和MVCC的关系</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MVCC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="toc-text">MVCC实现原理</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Read-View"><span class="toc-text">Read View</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4%E4%B8%AA%E9%9A%90%E5%BC%8F%E5%AD%97%E6%AE%B5-%E7%89%88%E6%9C%AC%E9%93%BE"><span class="toc-text">4个隐式字段 - 版本链</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#undo%E6%97%A5%E5%BF%97"><span class="toc-text">undo日志</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%95%B4%E4%BD%93%E6%B5%81%E7%A8%8B"><span class="toc-text">整体流程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MVCC%E7%9B%B8%E5%85%B3%E9%97%AE%E9%A2%98"><span class="toc-text">MVCC相关问题</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#RC%E3%80%81RR%E7%BA%A7%E5%88%AB%E4%B8%8B%E7%9A%84InnoDB%E5%BF%AB%E7%85%A7%E8%AF%BB%E6%9C%89%E4%BB%80%E4%B9%88%E4%B8%8D%E5%90%8C"><span class="toc-text">RC、RR级别下的InnoDB快照读有什么不同</span></a></li></ol></li></ol></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
 if (search_path.length == 0) {
   search_path = 'search.xml';
 }
