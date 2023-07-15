@@ -42,7 +42,7 @@
 <h2 id="Tomcat架构设计"><a href="#Tomcat架构设计" class="headerlink" title="Tomcat架构设计"></a>Tomcat架构设计</h2><blockquote>
 <p>Tomcat的前身为Catalina，Catalina又是一个轻量级的Servlet容器<br>在美国，catalina是一个很美的小岛。所以Tomcat作者的寓意可能是想把Tomcat设计成一个优雅美丽且轻量级的web服务器。<br>Tomcat从4.x版本开始除了作为支持Servlet的容器外，额外加入了很多的功能，比如：jsp、el、naming等等，所以说Tomcat不仅仅是Catalina。</p>
 </blockquote>
-<p><img src="/posts/55324/tomcat-%E6%9E%B6%E6%9E%84%E5%9B%BE.png"><br><img src="/posts/55324/tomcat-%E6%9E%B6%E6%9E%84%E5%9B%BE.jpeg"></p>
+<p><img src="/posts/55324/tomcat-%E6%9E%B6%E6%9E%84%E5%9B%BE.png"></p>
 <h3 id="从组件的角度看"><a href="#从组件的角度看" class="headerlink" title="从组件的角度看"></a>从组件的角度看</h3><p>Tomcat 要实现 2 个核心功能：</p>
 <ol>
 <li><strong>处理 Socket 连接，负责网络字节流与 Request 和 Response 对象的转化。</strong></li>
@@ -51,11 +51,19 @@
 <p>因此 Tomcat 设计了两个核心组件连接器（Connector）和容器（Container）来分别做这两件事情。连接器负责对外交流，容器负责内部处理。<br><strong>Connector 连接器</strong>和<strong>Container 容器</strong>可以说是 Tomcat 架构里最重要的两部分。</p>
 <ul>
 <li><p><strong>Server</strong><br>  表示整个tomcat服务器，它提供了一种优雅的方式来启动和停止整个系统，不必单独启停连接器和容器。<br>  它是Tomcat构成的顶级构成元素，所有一切均包含在Server中，包含多组服务（Service），负责管理和启动各个Service。</p>
+<p>  <img src="/posts/55324/tomcat-%E6%9E%B6%E6%9E%84%E5%9B%BE-server.png"></p>
 <ul>
 <li><p><strong>Service</strong><br>  表示服务，Server可以运行多个Service服务。比如一个Tomcat里面可运行订单服务、支付服务、用户服务等等；</p>
 <p>  Server的实现类StandardServer可以包含一个到多个Services，Service的实现类为StandardService调用了容器(Container)接口，其实是调用了Servlet Engine(引擎)，而且StandardService类中也指明了该Service归属的Server。</p>
+<p>  <img src="/posts/55324/tomcat-%E6%9E%B6%E6%9E%84%E5%9B%BE-%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6.png"></p>
 <ul>
-<li><strong>核心组件：Connector 连接器</strong><br>  表示连接器, <strong>它将Service和Container连接起来</strong>。<br>  注册在Service中，指定当前Service要监听的端口port。<br>  用于监听端口，接受来自客户端的请求，并将请求转交给Engine处理，同时将来自Engine的答复返回给客户端。</li>
+<li><strong>核心组件：Connector 连接器</strong><br>  表示连接器, <strong>它将Service和Container连接起来</strong>。<br>  注册在Service中，指定当前Service要监听的端口port。<br>  用于监听端口，接受来自客户端的请求，并将请求转交给Engine处理，同时将来自Engine的答复返回给客户端。<ul>
+<li>ProtocolHandler</li>
+<li>Endpoint</li>
+<li>Processor</li>
+<li>Adapter</li>
+</ul>
+</li>
 <li><strong>核心组件：Container 容器</strong><br>  表示容器，可以看做Servlet容器。<br>  引擎(Engine)、主机(Host)、上下文(Context)和Wraper均继承自Container接口，所以它们都是容器。<ul>
 <li>Engine 引擎<br>  引擎是Servlet 的顶层容器，用来管理多个虚拟站点，一个 Service 最多只能有一个 Engine。</li>
 <li>Host 虚拟主机<br>  虚拟主机，负责 web 应用的部署和 Context 的创建。可以给 Tomcat 配置多个虚拟主机地址，而一个虚拟主机下可以部署多个 Web 应用程序。</li>
@@ -88,40 +96,23 @@
 </ul>
 <p>简而言之，Connector 连接器接收连接请求，创建Request和Response对象用于和请求端交换数据，然后分配线程让Engine（也就是Servlet容器）来处理这个请求，并把产生的Request和Response对象传给Engine。当Engine处理完请求后，通过Connector将响应返回给客户端。</p>
 <h4 id="Tomcat如何接收到一个http请求"><a href="#Tomcat如何接收到一个http请求" class="headerlink" title="Tomcat如何接收到一个http请求"></a>Tomcat如何接收到一个http请求</h4><p><strong>Connector组件</strong>的<strong>Endpoint</strong>中的<strong>Acceptor</strong>监听客户端套接字连接并接收Socket。</p>
-<h2 id="深入了解：核心组件Connector"><a href="#深入了解：核心组件Connector" class="headerlink" title="深入了解：核心组件Connector"></a>深入了解：核心组件Connector</h2><p>Connector（连接器）组件负责生成请求对象和响应对象的，Tomcat默认为HttpConnector，负责根据收到的Http请求报文生成Request对象和Response对象，并把这两个对象传递给Container，然后根据Response中的内容生成相应的HTTP报文。</p>
-<p>Connector是使用<strong>ProtocolHandler</strong>来处理请求的，不同的ProtocolHandler代表不同的连接类型。<br>Http11Protocol使用的是普通Socket来连接的，<strong>Http11NioProtocol</strong>使用的是<strong>NioSocket</strong>来连接的。</p>
-<h3 id="ProtocolHandler"><a href="#ProtocolHandler" class="headerlink" title="ProtocolHandler"></a>ProtocolHandler</h3><p><img src="/posts/55324/tomcat-connector-ProtocolHandler.png"></p>
-<ul>
-<li><p>Endpoint<br>  Endpoint用来处理底层Socket的网络连接，由于是处理底层的Socket网络连接，因此Endpoint是用来实现TCP/IP协议的。</p>
-<p>  Endpoint的抽象实现类AbstractEndpoint里面定义的Acceptor和AsyncTimeout两个内部类和一个Handler接口。</p>
-<ul>
-<li>Acceptor<br>  Acceptor用于监听请求。</li>
-<li>Handler<br>  Handler用于处理接收到的Socket，在内部调用Processor进行处理。</li>
-<li>AsyncTimeout<br>  AsyncTimeout用于检查异步Request的超时。</li>
-</ul>
-</li>
-<li><p>Processor<br>  Processor用于将Endpoint接收到的Socket封装成Request，用来实现HTTP协议的。</p>
-</li>
-<li><p>Adaptor<br>  Adapter用于将Request交给Container进行具体的处理，用来将请求适配到Servlet容器进行具体的处理。</p>
-</li>
-</ul>
-<h3 id="Http11NioProtocol"><a href="#Http11NioProtocol" class="headerlink" title="Http11NioProtocol"></a>Http11NioProtocol</h3><p><img src="/posts/55324/tomcat-connector-Http11NioProtocol.png"></p>
-<h4 id="NioEndpoint"><a href="#NioEndpoint" class="headerlink" title="NioEndpoint"></a>NioEndpoint</h4><p><img src="/posts/55324/tomcat-connector-nioendpoint-%E6%89%A7%E8%A1%8C%E5%BA%8F%E5%88%97%E5%9B%BE.png"></p>
+<h2 id="深入了解：Tomcat初始化与启动"><a href="#深入了解：Tomcat初始化与启动" class="headerlink" title="深入了解：Tomcat初始化与启动"></a>深入了解：Tomcat初始化与启动</h2><blockquote>
+<p>startup.bat -&gt; catalina.bat  中 找到启动的主类为  org.apache.catalina.startup.Bootstrap</p>
+</blockquote>
+<p><img src="/posts/55324/tomcat-%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E5%90%AF%E5%8A%A8-%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%9B%BE.png"></p>
+<h2 id="深入了解：核心组件Connector"><a href="#深入了解：核心组件Connector" class="headerlink" title="深入了解：核心组件Connector"></a>深入了解：核心组件Connector</h2><p>详情请见</p>
 <h2 id="深入了解：核心组件Container"><a href="#深入了解：核心组件Container" class="headerlink" title="深入了解：核心组件Container"></a>深入了解：核心组件Container</h2><p>Container是容器的父接口，所有子容器都必须实现这个接口，简单来说就是服务器部署的项目是运行在Container中的。Container里面的Servlet获取到Connector传递过来对应的的Request对象和Response对象进行相应的操作。</p>
+<h3 id="Mapper组件机制及请求处理机制"><a href="#Mapper组件机制及请求处理机制" class="headerlink" title="Mapper组件机制及请求处理机制"></a>Mapper组件机制及请求处理机制</h3><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/NaShiYu/article/details/111773908">https://blog.csdn.net/NaShiYu/article/details/111773908</a></p>
 <h2 id="Tomcat-类加载机制"><a href="#Tomcat-类加载机制" class="headerlink" title="Tomcat 类加载机制"></a>Tomcat 类加载机制</h2><h3 id="打破双亲委派"><a href="#打破双亲委派" class="headerlink" title="打破双亲委派"></a>打破双亲委派</h3><p><strong>为什么Tomcat的类加载器不是双亲委派模型</strong><br>Java默认的类加载机制是通过双亲委派模型来实现的，而Tomcat实现的方式又和双亲委派模型有所区别。</p>
 <p>原因在于一个Tomcat容器允许同时运行多个Web程序，每个Web程序依赖的类又必须是相互隔离的。<br>因此，如果Tomcat使用双亲委派模式来加载类的话，将导致Web程序依赖的类变为共享的。</p>
 <p>举个例子，假如我们有两个Web程序，一个依赖A库的1.0版本，另一个依赖A库的2.0版本，他们都使用了类xxx.xx.Clazz，其实现的逻辑因类库版本的不同而结构完全不同。那么这两个Web程序的其中一个必然因为加载的Clazz不是所使用的Clazz而出现问题！而这对于开发来说是非常致命的！</p>
 <p><img src="/posts/55324/tomcat-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%9B%BE.png"></p>
 <ul>
-<li>Common类加载器，负责加载Tomcat和Web应用都复用的类 <ul>
+<li>Common类加载器，负责加载Tomcat和Web应用都复用的类 </li>
 <li>Catalina类加载器，负责加载Tomcat专用的类，而这些被加载的类在Web应用中将不可见</li>
-<li>Shared类加载器，负责加载Tomcat下所有的Web应用程序都复用的类，而这些被加载的类在Tomcat中将不可见 <ul>
+<li>Shared类加载器，负责加载Tomcat下所有的Web应用程序都复用的类，而这些被加载的类在Tomcat中将不可见 </li>
 <li>WebApp类加载器，负责加载具体的某个Web应用程序所使用到的类，而这些被加载的类在Tomcat和其他的Web应用程序都将不可见</li>
 <li>Jsp类加载器，每个jsp页面一个类加载器，不同的jsp页面有不同的类加载器，方便实现jsp页面的热插拔</li>
-</ul>
-</li>
-</ul>
-</li>
 </ul>
 </div><div class="tags"><a href="/tags/Tomcat"><i class="fa fa-tag">Tomcat</i></a></div><div class="post-nav"><a class="pre" href="/posts/33757.html">SpringBoot</a><a class="next" href="/posts/21914.html">消息队列——Apache Pulsar</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
   clientID: '8359b7a19b78f2b9e112',
@@ -133,7 +124,7 @@
   distractionFreeMode: false
 })
 gitalk.render('container')
-</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Web%E5%AE%B9%E5%99%A8%E5%9F%BA%E7%A1%80%E8%AE%A4%E7%9F%A5"><span class="toc-text">Web容器基础认知</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%92%8C%E6%B5%8F%E8%A7%88%E5%99%A8%E7%9A%84%E4%BA%A4%E4%BA%92"><span class="toc-text">如何实现服务器和浏览器的交互</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFServlet"><span class="toc-text">什么是Servlet</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat%E5%92%8CSpring%E3%80%81Spring-MVC%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-text">Tomcat和Spring、Spring MVC的关系</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Spring-MVC"><span class="toc-text">Spring MVC</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#DispatcherServlet"><span class="toc-text">DispatcherServlet</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1"><span class="toc-text">Tomcat架构设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E%E7%BB%84%E4%BB%B6%E7%9A%84%E8%A7%92%E5%BA%A6%E7%9C%8B"><span class="toc-text">从组件的角度看</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#web-xml"><span class="toc-text">web.xml</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E%E4%B8%80%E4%B8%AA%E5%AE%8C%E6%95%B4%E8%AF%B7%E6%B1%82%E7%9A%84%E8%A7%92%E5%BA%A6%E7%9C%8B"><span class="toc-text">从一个完整请求的角度看</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Tomcat%E5%A6%82%E4%BD%95%E6%8E%A5%E6%94%B6%E5%88%B0%E4%B8%80%E4%B8%AAhttp%E8%AF%B7%E6%B1%82"><span class="toc-text">Tomcat如何接收到一个http请求</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%EF%BC%9A%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6Connector"><span class="toc-text">深入了解：核心组件Connector</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ProtocolHandler"><span class="toc-text">ProtocolHandler</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Http11NioProtocol"><span class="toc-text">Http11NioProtocol</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#NioEndpoint"><span class="toc-text">NioEndpoint</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%EF%BC%9A%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6Container"><span class="toc-text">深入了解：核心组件Container</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6"><span class="toc-text">Tomcat 类加载机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%93%E7%A0%B4%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE"><span class="toc-text">打破双亲委派</span></a></li></ol></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Web%E5%AE%B9%E5%99%A8%E5%9F%BA%E7%A1%80%E8%AE%A4%E7%9F%A5"><span class="toc-text">Web容器基础认知</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%92%8C%E6%B5%8F%E8%A7%88%E5%99%A8%E7%9A%84%E4%BA%A4%E4%BA%92"><span class="toc-text">如何实现服务器和浏览器的交互</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFServlet"><span class="toc-text">什么是Servlet</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat%E5%92%8CSpring%E3%80%81Spring-MVC%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-text">Tomcat和Spring、Spring MVC的关系</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Spring-MVC"><span class="toc-text">Spring MVC</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#DispatcherServlet"><span class="toc-text">DispatcherServlet</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1"><span class="toc-text">Tomcat架构设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E%E7%BB%84%E4%BB%B6%E7%9A%84%E8%A7%92%E5%BA%A6%E7%9C%8B"><span class="toc-text">从组件的角度看</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#web-xml"><span class="toc-text">web.xml</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E%E4%B8%80%E4%B8%AA%E5%AE%8C%E6%95%B4%E8%AF%B7%E6%B1%82%E7%9A%84%E8%A7%92%E5%BA%A6%E7%9C%8B"><span class="toc-text">从一个完整请求的角度看</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Tomcat%E5%A6%82%E4%BD%95%E6%8E%A5%E6%94%B6%E5%88%B0%E4%B8%80%E4%B8%AAhttp%E8%AF%B7%E6%B1%82"><span class="toc-text">Tomcat如何接收到一个http请求</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%EF%BC%9ATomcat%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E5%90%AF%E5%8A%A8"><span class="toc-text">深入了解：Tomcat初始化与启动</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%EF%BC%9A%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6Connector"><span class="toc-text">深入了解：核心组件Connector</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%EF%BC%9A%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6Container"><span class="toc-text">深入了解：核心组件Container</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Mapper%E7%BB%84%E4%BB%B6%E6%9C%BA%E5%88%B6%E5%8F%8A%E8%AF%B7%E6%B1%82%E5%A4%84%E7%90%86%E6%9C%BA%E5%88%B6"><span class="toc-text">Mapper组件机制及请求处理机制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6"><span class="toc-text">Tomcat 类加载机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%93%E7%A0%B4%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE"><span class="toc-text">打破双亲委派</span></a></li></ol></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
 if (search_path.length == 0) {
   search_path = 'search.xml';
 }
