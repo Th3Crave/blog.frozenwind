@@ -73,9 +73,9 @@
 </ol>
 <p>CPU问题排查步骤</p>
 <ol>
-<li>执行<code>“top”</code>命令：查看所有进程占系统CPU的排序。极大可能排第一个的就是咱们的java进程（COMMAND列）。PID那一列就是进程号。</li>
-<li>执行<code>“top -H -p 进程号”</code>命令：查看java进程下的所有线程占CPU的情况。<br> -H参数：显示进程下的线程，一般结合p参数使用，查看某个进程下的线程，例如: top -H -p 1。</li>
-<li>执行<code>“printf &quot;%x\n&quot; 线程号</code>命令 ：后续查看线程堆栈信息展示的都是十六进制，为了找到线程堆栈信息，需要把线程号转成16进制。<br> 例如, printf “%x\n” 10 -》打印：a，那么在jstack中线程号就是0xa。</li>
+<li>执行<code>top</code>命令：查看所有进程占系统CPU的排序。极大可能排第一个的就是咱们的java进程（COMMAND列）。PID那一列就是进程号。</li>
+<li>执行<code>top -H -p 进程号</code>命令：查看java进程下的所有线程占CPU的情况。<br> -H参数：显示进程下的线程，一般结合p参数使用，查看某个进程下的线程，例如: top -H -p 1。</li>
+<li>执行<code>printf &quot;%x\n&quot; 线程号</code>命令 ：后续查看线程堆栈信息展示的都是十六进制，为了找到线程堆栈信息，需要把线程号转成16进制。<br> 例如, printf “%x\n” 10 -》打印：a，那么在jstack中线程号就是0xa。</li>
 <li>执行<code>“jstack 进程号 | grep 线程ID”</code> 查找某进程下 -》线程ID（jstack堆栈信息中的nid）=0xa的线程堆栈信息。<br> 如果“”VM Thread” os_prio=0 tid=0x00007f871806e000 nid=0xa runnable”，第一个双引号圈起来的就是线程名，如果是“VM Thread”这就是虚拟机GC回收线程了</li>
 <li>jstat</li>
 <li>jmap</li>
