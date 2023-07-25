@@ -101,7 +101,55 @@
 <p><strong>第二个常量</strong>同理可得：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#<span class="number">2</span> = Fieldref           #<span class="number">3.</span>#<span class="number">19</span>         <span class="comment">// com/rhythm7/Main.m:I</span></span><br><span class="line">#<span class="number">3</span> = Class              #<span class="number">20</span>            <span class="comment">// com/rhythm7/Main</span></span><br><span class="line">#<span class="number">5</span> = Utf8               m</span><br><span class="line">#<span class="number">6</span> = Utf8               I</span><br><span class="line">#<span class="number">19</span> = NameAndType        #<span class="number">5</span>:#<span class="number">6</span>          <span class="comment">// m:I</span></span><br><span class="line">#<span class="number">20</span> = Utf8               com/rhythm7/Main</span><br></pre></td></tr></table></figure>
 
-<p>关于字节码的类型对应如下：<br>| 标识字符 | 含义                                       |<br>| :——- | :—————————————– |<br>| B        | 基本类型byte                               |<br>| C        | 基本类型char                               |<br>| D        | 基本类型double                             |<br>| F        | 基本类型float                              |<br>| I        | 基本类型int                                |<br>| J        | 基本类型long                               |<br>| S        | 基本类型short                              |<br>| Z        | 基本类型boolean                            |<br>| V        | 特殊类型void                               |<br>| L        | 对象类型，以分号结尾，如Ljava/lang/Object; |</p>
+<p>关于字节码的类型对应如下：</p>
+<table>
+<thead>
+<tr>
+<th align="left">标识字符</th>
+<th align="left">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">B</td>
+<td align="left">基本类型byte</td>
+</tr>
+<tr>
+<td align="left">C</td>
+<td align="left">基本类型char</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">基本类型double</td>
+</tr>
+<tr>
+<td align="left">F</td>
+<td align="left">基本类型float</td>
+</tr>
+<tr>
+<td align="left">I</td>
+<td align="left">基本类型int</td>
+</tr>
+<tr>
+<td align="left">J</td>
+<td align="left">基本类型long</td>
+</tr>
+<tr>
+<td align="left">S</td>
+<td align="left">基本类型short</td>
+</tr>
+<tr>
+<td align="left">Z</td>
+<td align="left">基本类型boolean</td>
+</tr>
+<tr>
+<td align="left">V</td>
+<td align="left">特殊类型void</td>
+</tr>
+<tr>
+<td align="left">L</td>
+<td align="left">对象类型，以分号结尾，如Ljava/lang/Object;</td>
+</tr>
+</tbody></table>
 <p>对于数组类型，每一位使用一个前置的<code>[</code>字符来描述，如定义一个**java.lang.String[][]**类型的维数组，将被记录为<code>[[Ljava/lang/String;</code></p>
 <h3 id="方法表集合"><a href="#方法表集合" class="headerlink" title="方法表集合"></a>方法表集合</h3><p>在常量池之后的是对类内部的方法描述，在字节码中以表的集合形式表现，暂且不管字节码文件的16进制文件内容如何，我们直接看反编译后的内容。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">int</span> m;</span><br><span class="line">descriptor: I</span><br><span class="line">flags: ACC_PRIVATE</span><br></pre></td></tr></table></figure>

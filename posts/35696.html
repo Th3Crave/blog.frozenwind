@@ -14,14 +14,21 @@
 <h3 id="6-CMS收集器"><a href="#6-CMS收集器" class="headerlink" title="6. CMS收集器"></a>6. CMS收集器</h3><p>concurrent mark sweep，是一种以<strong>获取最短回收停顿时间</strong>为目标的收集器，非常符合在注重用户体验的应用上使用。<br>CMS收集器是HotSpot虚拟机第一款真正意义上的并发收集器，它第一次实现了让<strong>垃圾收集线程与用户线程(基本上)同时工作</strong>。</p>
 <p>CMS收集器用<strong>标记—清除</strong>算法实现。<br>整个过程分为四个步骤：</p>
 <ul>
-<li>初始标记<br>  STW，耗时短，仅标记GC Roots能直接关联到的对象</li>
-<li>并发标记<br>  不会STW，耗时长，从初识标记的对象中遍历整个对象图</li>
-<li>重新标记<br>  STW，耗时短，修正并发标记期间用户线程导致的标记变动记录</li>
-<li>并发清除。<br>  不会STW，产生浮动垃圾。<br>  并发失败的话，启动Serial Old，会导致停顿时间变长。</li>
-</ul>
-<p>优点：并发收集、低停顿。</p>
+<li><p>初始标记<br>  STW，耗时短，仅标记GC Roots能直接关联到的对象</p>
+</li>
+<li><p>并发标记<br>  不会STW，耗时长，从初识标记的对象中遍历整个对象图</p>
+</li>
+<li><p>重新标记<br>  STW，耗时短，修正并发标记期间用户线程导致的标记变动记录</p>
+</li>
+<li><p>并发清除。<br>  不会STW，产生浮动垃圾。<br>  并发失败的话，启动Serial Old，会导致停顿时间变长。</p>
+</li>
+<li><p>优点：</p>
 <ul>
-<li>缺点：<ul>
+<li>并发收集、低停顿。</li>
+</ul>
+</li>
+<li><p>缺点：</p>
+<ul>
 <li>对CPU资源敏感</li>
 <li>无法处理浮动垃圾</li>
 <li>使用“标记—清除”算法会导致收集结束时会有大量空间碎片产生。</li>
@@ -30,8 +37,8 @@
 </li>
 </ul>
 <p><strong>GC时为什么要暂停用户线程？</strong><br>首先，如果不暂停用户线程，就意味着期间会不断有垃圾产生，永远也清理不干净。<br>其次，用户线程的运行必然会导致对象的引用关系发生改变，这就会导致两种情况：漏标和错标。</p>
-<p><strong>为什么CMS采用“标记-清除”算法而不采用“标记-整理”算法</strong><br>因为CMS作为第一款实现用户线程和收集线程并发执行的收集器，当时的设计理念是减少停顿时间，最好是能并发执行。<br>但是问题来了，如要用户线程也在执行，那么就不能轻易的改变堆中对象的内存地址，不然会导致用户线程无法定位引用对象，从而无法正常运行。而标记整理算法和标记复制算法都会移动存活的对象，这就与上面的策略不符，因此CMS采用的是标记清理算法。</p>
-<h3 id="7-G1收集器"><a href="#7-G1收集器" class="headerlink" title="7. G1收集器"></a>7. G1收集器</h3><p>G1(Garbage-First)是一款面向服务器的垃圾收集器，主要针对配备多颗处理器及大容量内存的及其，以极高概率满足GC停顿时间要求的同时，还具备高吞吐量性能特征。</p>
+<p><strong>为什么CMS采用“标记-清除”算法而不采用“标记-整理”算法</strong><br>因为CMS作为第一款实现用户线程和收集线程并发执行的收集器，当时的设计理念是减少停顿时间，最好是能并发执行。<br>但是问题来了，如要用户线程也在执行，那么就不能轻易的改变堆中对象的内存地址，不然会导致用户线程无法定位引用对象，从而无法正常运行。而标记整理算法和标记复制算法都会移动存活的对象，这就与上面的策略不符，因此CMS采用的是标记-清除算法。</p>
+<h3 id="7-G1收集器"><a href="#7-G1收集器" class="headerlink" title="7. G1收集器"></a>7. G1收集器</h3><p>G1(Garbage-First)是一款面向服务器的垃圾收集器，主要针对配备多颗处理器及大容量内存的机器，以极高概率满足GC停顿时间要求的同时，还具备高吞吐量性能特征。</p>
 <p>被视为JDK1.7中HotSpot虚拟机的一个重要进化特征，具备以下特点：</p>
 <ul>
 <li>分代收集</li>
@@ -44,11 +51,11 @@
 <li>初始标记<br>  这个阶段是STW(Stop the World )的，所有应用线程会被暂停，标记出从GC Root开始直接可达的对象。</li>
 <li>并发标记<br>  从GC Roots开始对堆中对象进行可达性分析，找出存活对象，耗时较长。</li>
 <li>最终标记<br>  标记那些在并发标记阶段发生变化的对象，这阶段需要停顿线程，但是可以并行执行。</li>
-<li>筛选回收<br>  暂停用户线程，筛选阶段首先对各个Region的回收价值和成本进行排序，根据用户所期望的GC停顿时间来制定回收计划。<br>  G1收集器在后台维护了一个优先列表，每次根据允许的收集时间，优先选择回收价值最大的Region。这种使用 Region 划分内存空间以及有优先级的区域回收方式，保证了 GF 收集器在有限时间内可以尽可能高的收集效率（把内存化整为零）。</li>
+<li>筛选回收<br>  暂停用户线程，筛选阶段首先对各个Region的回收价值和成本进行排序，根据用户所期望的GC停顿时间来制定回收计划。<br>  G1收集器在后台维护了一个优先列表，每次根据允许的收集时间，优先选择回收价值最大的Region。这种使用 Region 划分内存空间以及有优先级的区域回收方式，保证了 G1 收集器在有限时间内可以尽可能高的收集效率（把内存化整为零）。</li>
 </ul>
 <h4 id="G1收集器的内存模型"><a href="#G1收集器的内存模型" class="headerlink" title="G1收集器的内存模型"></a>G1收集器的内存模型</h4><p><img src="/posts/35696/g1-region.png"><br><strong>G1堆内存结构</strong><br>堆内存会被切分成为很多个固定大小区域(Region)，每个是连续范围的虚拟内存。<br>堆内存中一个区域(Region)的大小可以通过-XX:G1HeapRegionSize参数指定，大小区间最小1M、最大32M，总之是2的幂次方。<br>默认把堆内存按照2048份均分。</p>
-<p><strong>G1堆内存分配</strong><br>每个Region被标记了E、S、O和H，这些区域在逻辑上被映射为Eden，Survivor和老年代。<br>存活的对象从一个区域转移(即复制或移动)到另一个区域。区域被设计为并行收集垃圾，可能会暂停所有应用线程。</p>
-<p>如上图所示，区域可以分配到Eden，survivor和老年代。此外，还有第四种类型，被称为巨型区域(Humongous Region)，Humongous区域是为了那些存储超过50%标准region大小的对象而设计的，它用来专门存放巨型对象。如果一个H区装不下一个巨型对象，那么G1会寻找连续的H分区来存储。为了能找到连续的H区，有时候不得不启动Full GC。<br>G1收集器采用“标记-复制”和“标记-整理”。从整体上看是基于“标记-整理”，从局部看，两个region之间是“标记-复制”。</p>
+<p><strong>G1堆内存分配</strong><br>每个Region被标记了E、S、O和H，这些区域在逻辑上被映射为Eden、Survivor和老年代。<br>存活的对象从一个区域转移(即复制或移动)到另一个区域。区域被设计为并行收集垃圾，可能会暂停所有应用线程。</p>
+<p>如上图所示，区域可以分配到Eden、survivor和老年代。此外，还有第四种类型，被称为巨型区域(Humongous Region)，Humongous区域是为了那些存储超过50%标准region大小的对象而设计的，它用来专门存放巨型对象。如果一个H区装不下一个巨型对象，那么G1会寻找连续的H分区来存储。为了能找到连续的H区，有时候不得不启动Full GC。<br>G1收集器采用“标记-复制”和“标记-整理”。从整体上看是基于“标记-整理”，从局部看，两个region之间是“标记-复制”。</p>
 <h4 id="G1的GC模式"><a href="#G1的GC模式" class="headerlink" title="G1的GC模式"></a>G1的GC模式</h4><ol>
 <li>YoungGC年轻代收集<br> 在分配一般对象（非巨型对象）时，当所有eden region使用达到最大阀值并且无法申请足够内存时，会触发一次YoungGC。每次younggc会回收所有Eden以及Survivor区，并且将存活对象复制到Old区以及另一部分的Survivor区。<br> YoungGC的回收过程如下:<ul>
 <li>根扫描,跟CMS类似，Stop the world，扫描GC Roots对象。</li>
@@ -58,7 +65,7 @@
 <li>处理引用队列，软引用，弱引用，虚引用</li>
 </ul>
 </li>
-<li>mixed gc<br> 当越来越多的对象晋升到老年代old region时，为了避免堆内存被耗尽，虚拟机会触发一个混合的垃圾收集器，即mixed gc，该算法并不是一个old gc，除了回收整个young region，还会回收一部分的old region，这里需要注意:是一部分老年代，而不是全部老年代，可以选择哪些old region进行收集，从而可以对垃圾回收的耗时时间进行控制。<br> G1没有fullGC概念，需要fullGC时，调用serialOld GC进行全堆扫描（包括eden、survivor、o、perm）。</li>
+<li>mixed gc<br> 当越来越多的对象晋升到老年代old region时，为了避免堆内存被耗尽，虚拟机会触发一个混合的垃圾收集器，即mixed gc，该算法并不是一个old gc，除了回收整个young region，还会回收一部分的old region，这里需要注意：是一部分老年代，而不是全部老年代，可以选择哪些old region进行收集，从而可以对垃圾回收的耗时时间进行控制。<br> G1没有fullGC概念，需要fullGC时，调用serialOld GC进行全堆扫描（包括eden、survivor、o、perm）。</li>
 </ol>
 <h2 id="其它"><a href="#其它" class="headerlink" title="其它"></a>其它</h2><h3 id="垃圾收集器参数总结"><a href="#垃圾收集器参数总结" class="headerlink" title="垃圾收集器参数总结"></a>垃圾收集器参数总结</h3></div><div class="tags"><a href="/tags/Java"><i class="fa fa-tag">Java</i></a><a href="/tags/JVM"><i class="fa fa-tag">JVM</i></a></div><div class="post-nav"><a class="pre" href="/posts/16290.html">深入理解JVM——3.5内存分配与回收策略</a><a class="next" href="/posts/61135.html">深入理解JVM——3.2对象死或否</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
   clientID: '8359b7a19b78f2b9e112',

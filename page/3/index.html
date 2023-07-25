@@ -20,7 +20,10 @@ TreeMap底层通过红黑树（Red-Black tree）实现，也就意味着contains
 Java中PriorityQueue实现了Queue接口...</div><p class="readmore"><a href="/posts/62869.html">阅读全文</a></p></div><div class="post"><h1 class="post-title"><a href="/posts/6320.html">Java Collection - Stack &amp; Queue &amp; Deque</a></h1><div class="post-meta">2023-05-16</div><div class="post-content">概述Java里有一个叫做Stack的类，却没有叫做Queue的类(它是个接口名字)。
 当需要使用栈时，Java已不推荐使用Stack，而是推荐使用更高效的ArrayDeque；既然Queue只是一个接口，当需要使用队列时也就首选ArrayDeque了(次选是LinkedList)。
 为什么Stack被弃用Java 中的 Stack 实现，是被业界一直认为非常...</div><p class="readmore"><a href="/posts/6320.html">阅读全文</a></p></div><div class="post"><h1 class="post-title"><a href="/posts/38537.html">JVM-GC-垃圾回收基础知识</a></h1><div class="post-meta">2023-05-15</div><div class="post-content">垃圾收集主要是针对堆和方法区进行。程序计数器、虚拟机栈和本地方法栈这三个区域属于线程私有的，只存在于线程的生命周期内，线程结束之后也会消失，因此不需要对这三个区域进行垃圾回收。
-判断一个对象是否可被回收引用计数算法可达性算法方法区的回收finalize()finalize() 类似 C++ 的析构函数，用来做关闭外部资源等工作。但是 try-finally ...</div><p class="readmore"><a href="/posts/38537.html">阅读全文</a></p></div><div class="post"><h1 class="post-title"><a href="/posts/10759.html">JVM-基础-Java内存模型</a></h1><div class="post-meta">2023-05-15</div><div class="post-content">JMM引入JMM与硬件内存结构关系硬件内存结构简介JMM与硬件内存连接 - 引入
+判断一个对象是否可被回收1、引用计数算法2、可达性算法在java语言里，可作为GC Roots的对象包括下面几种：
+
+虚拟机栈(栈帧中的本地变量表)中的引用的对象。
+方法区中的类静态...</div><p class="readmore"><a href="/posts/38537.html">阅读全文</a></p></div><div class="post"><h1 class="post-title"><a href="/posts/10759.html">JVM-基础-Java内存模型</a></h1><div class="post-meta">2023-05-15</div><div class="post-content">JMM引入JMM与硬件内存结构关系硬件内存结构简介JMM与硬件内存连接 - 引入
 JMM与硬件内存连接 - 对象共享后的可见性
 JMM与硬件内存连接 - 竞态条件如果两个或多个线程共享一个对象，并且多个线程更新该共享对象中的变量，则可能会出现竞态。
 
