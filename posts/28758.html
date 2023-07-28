@@ -21,7 +21,9 @@
 </li>
 </ol>
 <h2 id="OSI七层网络模型"><a href="#OSI七层网络模型" class="headerlink" title="OSI七层网络模型"></a>OSI七层网络模型</h2><p><img src="/posts/28758/%E4%B8%83%E5%B1%82%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B.png"></p>
-<h2 id="应用层"><a href="#应用层" class="headerlink" title="应用层"></a>应用层</h2><h3 id="CDN"><a href="#CDN" class="headerlink" title="CDN"></a>CDN</h3><h3 id="DNS"><a href="#DNS" class="headerlink" title="DNS"></a>DNS</h3><p>什么是 DNS 、记录类型: A 记录、CNAME 记录、AAAA 记录等<br>域名解析、根域名服务器<br>DNS 污染、DNS 劫持、公共 DNS：114 DNS、Google DNS、OpenDNS</p>
+<h2 id="应用层"><a href="#应用层" class="headerlink" title="应用层"></a>应用层</h2><h3 id="CDN"><a href="#CDN" class="headerlink" title="CDN"></a>CDN</h3><h3 id="DNS"><a href="#DNS" class="headerlink" title="DNS"></a>DNS</h3><p><strong>什么是 DNS?</strong><br>DNS（Domain Name System）域名管理系统，是当用户使用浏览器访问网址之后，使用的第一个重要协议。<br><strong>DNS 要解决的是域名和 IP 地址的映射问题。</strong></p>
+<p>在实际使用中，有一种情况下，浏览器是可以不必动用 DNS 就可以获知域名和 IP 地址的映射的。浏览器在本地会维护一个<code>hosts</code>列表，一般来说浏览器要先查看要访问的域名是否在<code>hosts</code>列表中，如果有的话，直接提取对应的 IP 地址记录，就好了。如果本地<code>hosts</code>列表内没有<code>域名-IP</code>对应记录的话，那么 DNS 就闪亮登场了。</p>
+<p>记录类型: A 记录、CNAME 记录、AAAA 记录等<br>域名解析、根域名服务器<br>DNS 污染、DNS 劫持、公共 DNS：114 DNS、Google DNS、OpenDNS</p>
 <p>HTTP和HTTPS WebSocket</p>
 <h3 id="HTTP与HTTPS的区别"><a href="#HTTP与HTTPS的区别" class="headerlink" title="HTTP与HTTPS的区别"></a>HTTP与HTTPS的区别</h3><ul>
 <li>HTTPS是具有安全性的SSL加密协议，是密文传输的，HTTP明文传输</li>
