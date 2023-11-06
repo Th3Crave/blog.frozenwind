@@ -31,13 +31,12 @@
 <li>从数据库的relay log重做日志文件，再执行一次这些sql语句。（Sql执行线程）</li>
 </ul>
 <p>详细的主从同步过程如下：<br><img src="/posts/61222/%E4%B8%BB%E4%BB%8E%E5%90%8C%E6%AD%A5%E5%8E%9F%E7%90%86.png"></p>
-<ul>
-<li>主库的更新SQL(update、insert、delete)被写到binlog</li>
-<li>从库发起连接，连接到主库</li>
-<li>此时主库创建一个<strong>binlog dump thread</strong>，把bin log的内容发送到从库</li>
-<li>从库启动之后，创建一个<strong>I/O线程-io_thread</strong>，读取主库传过来的bin log内容并写入到relay log</li>
-<li>从库还会创建一个<strong>SQL线程-sql_thread</strong>，从relay log里面读取内容，从ExecMasterLog_Pos位置开始执行读取到的更新事件，将更新内容写入到slave的db</li>
-</ul>
+<ol>
+<li><strong>主库写 binlog</strong>：主库的更新SQL(update、insert、delete)被写到binlog；</li>
+<li><strong>主库发送 binlog</strong>：从库发起连接，连接到主库，此时主库创建一个<strong>binlog dump thread</strong>，把bin log的内容发送到从库；</li>
+<li><strong>从库写 relay log</strong>：从库启动之后，创建一个<strong>I/O线程-io_thread</strong>，读取主库传过来的bin log内容并写入到<strong>relay log</strong>；</li>
+<li><strong>从库回放</strong>：从库还会创建一个<strong>SQL线程-sql_thread</strong>，从<strong>relay log</strong>里面读取内容，从ExecMasterLog_Pos位置开始执行读取到的更新事件，将更新内容写入到slave的db。</li>
+</ol>
 <h3 id="主从一致性"><a href="#主从一致性" class="headerlink" title="主从一致性"></a>主从一致性</h3><h3 id="主从延迟"><a href="#主从延迟" class="headerlink" title="主从延迟"></a>主从延迟</h3><p>与主从数据同步相关的时间点有三个：</p>
 <ul>
 <li>主库执行完一个事务，写入binlog，我们把这个时刻记为T1；</li>
@@ -45,6 +44,14 @@
 <li>从库执行完这个事务，这个时刻记录为T3。</li>
 </ul>
 <p>主从延迟，指一个事务，在从库执行完的时间和在主库执行完的时间差值，即T3-T1。</p>
+<p>我们分析一下主从复制的过程。</p>
+<ol>
+<li>MySQL的主从复制都是单线程的操作，主库对所有DDL和DML产生binlog，binlog是顺序写，所以效率很高。</li>
+<li>从库的IO线程会到主库取binlog日志，放入relay log，效率会比较高。</li>
+<li>从库的SQL线程将主库的DDL和DML操作都在Slave回放，DML和DDL的IO操作是随机的，不是顺序的，因此成本会很高。</li>
+<li>还可能是从库上的其他查询产生lock争用，由于从库的SQL执行是单线程的，所以一个DDL卡住了，需要执行10分钟，那么所有之后的DDL会等待这个DDL执行完才会继续执行，这就导致了延时。</li>
+</ol>
+<p>总结一下主从延时的主要原因在于<strong>从库realy log回放</strong>这一步，当主库的TPS并发较高，产生的DDL数量超过从库一个SQL线程所能承受的范围，那么延时就产生了；当然还有可能是与从库的大型query语句产生了锁等待。</p>
 <h4 id="导致主从延迟的情况"><a href="#导致主从延迟的情况" class="headerlink" title="导致主从延迟的情况"></a>导致主从延迟的情况</h4><ul>
 <li>从库机器比主库机器性能差</li>
 <li>从库的查询压力大，消耗大量CPU，影响同步速度</li>
@@ -53,7 +60,24 @@
 <li>从数据库太多</li>
 <li>低版本的MySQL只支持单线程复制，如果主库并发高，来不及送到从库会导致延迟。<code>MySQL从5.6开始支持多线程复制</code>。</li>
 </ul>
-<h4 id="主从同步延迟如何处理"><a href="#主从同步延迟如何处理" class="headerlink" title="主从同步延迟如何处理"></a>主从同步延迟如何处理</h4><h2 id="分库分表"><a href="#分库分表" class="headerlink" title="分库分表"></a>分库分表</h2><h3 id="水平切分"><a href="#水平切分" class="headerlink" title="水平切分"></a>水平切分</h3><h3 id="垂直切分"><a href="#垂直切分" class="headerlink" title="垂直切分"></a>垂直切分</h3><h3 id="Sharding-策略"><a href="#Sharding-策略" class="headerlink" title="Sharding 策略"></a>Sharding 策略</h3><h4 id="Sharding-存在的问题及解决方案"><a href="#Sharding-存在的问题及解决方案" class="headerlink" title="Sharding 存在的问题及解决方案"></a>Sharding 存在的问题及解决方案</h4></div><div class="tags"><a href="/tags/MySQL"><i class="fa fa-tag">MySQL</i></a></div><div class="post-nav"><a class="pre" href="/posts/49043.html">Redis数据结构</a><a class="next" href="/posts/10347.html">MySQL-数据库锁及InnoDB的锁</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+<h4 id="主从同步延迟如何处理"><a href="#主从同步延迟如何处理" class="headerlink" title="主从同步延迟如何处理"></a>主从同步延迟如何处理</h4><p>最容易想到的办法，<strong>缩短主从同步时间</strong>：</p>
+<ul>
+<li><strong>提升从库机器配置</strong>，可以和主库一样，甚至更好；</li>
+<li>避免大事务；</li>
+<li>搞多个从库，即一主多从，分担从库查询压力；</li>
+<li>优化网络带宽；</li>
+<li>选择高版本MySQL，支持主库binlog多线程复制。</li>
+</ul>
+<p>也可以从业务场景考虑：</p>
+<ul>
+<li><strong>使用缓存</strong>。我们在同步写数据库的同时，也把数据写到缓存，查询数据时，会先查询缓存，不过这种情况会带来 MySQL 和 Redis 数据一致性问题。</li>
+<li><strong>查询主库</strong>。直接查询主库，这种情况会给主库太大压力，核心场景可以使用，比如订单支付。</li>
+</ul>
+<p>还可以在MySqL架构上来考虑。<br>主库对数据安全性的要求较高，设置配置如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sync_binlog = 1</span><br><span class="line">innodb_flush_log_at_trx_commit = 1</span><br></pre></td></tr></table></figure>
+<p>而从库不需要这么高的数据安全，完全可以将<code>sync_binlog</code>设置为0，或者关闭binlog；<code>innodb_flush_log</code>也可以设置为0，来提高sql的执行效率。</p>
+<p>架构方案：使用多台 slave 来分摊读请求，再从这些 slave 中取一台专用的服务器，只作为备份用，不进行其他任何操作，比如设置 sync_binlog 为0，或者关闭 binglog 等，提升从库查询性能。</p>
+<h2 id="分库分表"><a href="#分库分表" class="headerlink" title="分库分表"></a>分库分表</h2><h3 id="水平切分"><a href="#水平切分" class="headerlink" title="水平切分"></a>水平切分</h3><h3 id="垂直切分"><a href="#垂直切分" class="headerlink" title="垂直切分"></a>垂直切分</h3><h3 id="Sharding-策略"><a href="#Sharding-策略" class="headerlink" title="Sharding 策略"></a>Sharding 策略</h3><h4 id="Sharding-存在的问题及解决方案"><a href="#Sharding-存在的问题及解决方案" class="headerlink" title="Sharding 存在的问题及解决方案"></a>Sharding 存在的问题及解决方案</h4></div><div class="tags"><a href="/tags/MySQL"><i class="fa fa-tag">MySQL</i></a></div><div class="post-nav"><a class="pre" href="/posts/49043.html">Redis数据结构</a><a class="next" href="/posts/10347.html">MySQL-数据库锁及InnoDB的锁</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
   clientID: '8359b7a19b78f2b9e112',
   clientSecret: '5ad69dc1633a1834322067d017b6313bd231457c',
   repo: 'gitalk',
