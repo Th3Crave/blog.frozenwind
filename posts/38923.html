@@ -42,7 +42,7 @@
 <li><code>while true循环中，hasEvents = events();</code><br> 检查事件同步队列中events.poll()是否有事件，有就开始处理事件（此事件是由acceptor线程添加到队列当中的）；</li>
 <li>Iterator iterator =selector.selectedKeys().iterator()并遍历，处理所有事件 -&gt; processKey() -&gt; processSocket(READ/WRITE分别处理) -&gt; Executor executor = getExecutor(); -&gt; executor.execute(sc);调用线程池处理。</li>
 </ol>
-<h4 id="Executor"><a href="#Executor" class="headerlink" title="Executor"></a>Executor</h4></div><div class="tags"><a href="/tags/Tomcat"><i class="fa fa-tag">Tomcat</i></a></div><div class="post-nav"><a class="next" href="/posts/33930.html">大数据-浅谈</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+<h4 id="Executor"><a href="#Executor" class="headerlink" title="Executor"></a>Executor</h4></div><div class="tags"><a href="/tags/Tomcat"><i class="fa fa-tag">Tomcat</i></a></div><div class="post-nav"><a class="pre" href="/posts/4633.html">hexo-renderer-dartsass 替换 hex-renderer-sass 解决 node-sass问题</a><a class="next" href="/posts/33930.html">大数据-浅谈</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
   clientID: '8359b7a19b78f2b9e112',
   clientSecret: '5ad69dc1633a1834322067d017b6313bd231457c',
   repo: 'gitalk',
