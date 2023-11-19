@@ -4,17 +4,44 @@
   hm.src = 'https://hm.baidu.com/hm.js?' + 'bbf19a98c9ae28f2e1e8cfcee1d9585e';
   var s = document.getElementsByTagName("script")[0];
   s.parentNode.insertBefore(hm, s);
-  })();</script><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">分布式ID</h1><a id="logo" href="/.">frozeNwInd</a><p class="description">吕乘风的博客</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/tags/"><i class="fa fa-tag"> 标签</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/history/"><i class="fa fa-history"> 历史</i></a><a href="/message/"><i class="fa fa-comment"> 留言</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">分布式ID</h1><div class="post-meta">2022-04-11<span> | </span><span class="category"><a href="/categories/technology/">technology</a><a href="/categories/technology/%E6%9E%B6%E6%9E%84/">架构</a><a href="/categories/technology/%E6%9E%B6%E6%9E%84/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a></span></div><div class="post-content"><h3 id="雪花算法-snowflake"><a href="#雪花算法-snowflake" class="headerlink" title="雪花算法 snowflake"></a>雪花算法 snowflake</h3><p>twitter开源的分布式id生成算法。<br>把一个64位的long型的id，1个bit是不用的，用其中的41 bit作为毫秒数，用10 bit作为工作机器id，12 bit作为序列号。<br>理论上最多支持1024台机器每秒生成4096000个序列号。</p>
+  })();</script><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">分布式ID</h1><a id="logo" href="/.">frozeNwInd</a><p class="description">吕乘风的博客</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/tags/"><i class="fa fa-tag"> 标签</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/history/"><i class="fa fa-history"> 历史</i></a><a href="/message/"><i class="fa fa-comment"> 留言</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">分布式ID</h1><div class="post-meta">2022-04-11<span> | </span><span class="category"><a href="/categories/technology/">technology</a><a href="/categories/technology/%E6%9E%B6%E6%9E%84/">架构</a><a href="/categories/technology/%E6%9E%B6%E6%9E%84/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a></span></div><div class="post-content"><h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>在复杂分布式系统中，往往需要对大量的数据和消息进行唯一标识。如在各产品的系统中，数据日渐增长，对数据分库分表后需要有一个唯一ID来标识一条数据或消息，数据库的自增ID显然不能满足需求，此时一个能够生成全局唯一ID的系统是非常必要的。</p>
+<p>概括下来，那业务系统对ID号的要求有哪些呢？</p>
+<ol>
+<li><strong>全局唯一性</strong>：不能出现重复的ID号，既然是唯一标识，这是最基本的要求。</li>
+<li><strong>趋势递增</strong>：在MySQL InnoDB引擎中使用的是聚集索引，由于多数RDBMS使用B+tree的数据结构来存储索引数据，在主键的选择上我们应该尽量使用有序的主键保证写入性能。</li>
+<li><strong>单调递增</strong>：保证下一个ID一定大于上一个ID，例如事务版本号、IM增量消息、排序等特殊需求。</li>
+<li><strong>信息安全</strong>：如果ID是连续的，恶意用户的扒取工作就非常容易做了，直接按照顺序下载指定URL即可；如果是订单号就更危险了，竞对可以直接知道我们一天的单量。所以在一些应用场景下，会需要ID无规则、不规则。</li>
+</ol>
+<p>上述1、2、3对应三类不同的场景，3和4需求还是互斥的，无法使用同一个方案满足。</p>
+<p>同时，除了对ID号码自身的要求，业务还对ID号生成系统的可用性要求极高，想象一下，如果ID生成系统瘫痪，整个平台、领域的功能都无法执行，这就会带来一场灾难。</p>
+<p>由此总结出一个分布式ID生成系统应该做到如下几点：</p>
+<ol>
+<li>平均延迟和TP999延迟都要尽可能低；</li>
+<li>可用性5个9；</li>
+<li>高QPS。</li>
+</ol>
+<h2 id="常见方法介绍"><a href="#常见方法介绍" class="headerlink" title="常见方法介绍"></a>常见方法介绍</h2><h3 id="UUID"><a href="#UUID" class="headerlink" title="UUID"></a>UUID</h3><p>UUID(Universally Unique Identifier)的标准型式包含32个16进制数字，以连字号分为五段，形式为8-4-4-4-12的36个字符，示例：<code>550e8400-e29b-41d4-a716-446655440000</code>。</p>
+<p>优点：</p>
+<ul>
+<li>性能非常高，本地生成，没有网络消耗。</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>不易于存储。UUID太长，16字节128位，通常以36长度的字符串表示，很多场景不适用。</li>
+<li>信息不安全。基于MAC地址生成UUID的算法可能会造成MAC地址泄露。</li>
+<li>ID作为主键时在特定的环境会存在一些问题，比如做DB主键的场景下，UUID非常不适用。<ul>
+<li>MySQL官方有明确的建议，主键要尽量越短越好，36个字符长度的UUID不符合要求；</li>
+<li>对MySQL索引不利。如果作为数据库主键，在InnoDB引擎下，UUID的无序性可能会引起数据位置频繁变动，严重影响性能。</li>
+</ul>
+</li>
+</ul>
+<h3 id="雪花算法-snowflake"><a href="#雪花算法-snowflake" class="headerlink" title="雪花算法 snowflake"></a>雪花算法 snowflake</h3><p>twitter开源的分布式id生成算法。<br>把一个64位的long型的id，1个bit是不用的，用其中的41 bit作为毫秒数，用10 bit作为工作机器id，12 bit作为序列号。<br>理论上最多支持1024台机器每秒生成4096000个序列号。</p>
 <p><img src="/posts/59917/snowflake.jpeg"></p>
 <ul>
 <li>1 bit：固定值0<br>  因为二进制里第一个bit为如果是1，那么都是负数，但是我们生成的id都是正数，所以第一个bit统一都是0</li>
 <li>41 bit：表示的是时间戳，单位是ms<br>  41 bit可以表示的数字多达2^41 - 1，也就是可以标识2 ^ 41 - 1个毫秒值，换算成年就是表示69年的时间</li>
 <li>10 bit：记录工作机器id<br>  代表的是这个服务最多可以部署在2^10台机器上面，也就是1024台机器。<br>  但是10 bit里<strong>5个bit代表机房id</strong>，<strong>5个bit代表机器id</strong>，意思就是最多代表2 ^ 5个机房(32个机房)，每个机房里可以代表2 ^ 5个机器(32台机器)。</li>
 <li>12 bit：记录同一个毫秒内产生的不同id<br>  12 bit可以代表的最大正整数是2 ^ 12 - 1 = 4096，也就是说可以用这个12bit代表的数字来区分同一个毫秒内的4096个不同的id</li>
-</ul>
-<p>缺点：</p>
-<ul>
-<li>依赖机器的时钟，如果服务器时钟回拨，会导致重复ID生成</li>
 </ul>
 <p>优点：</p>
 <ul>
@@ -23,6 +50,59 @@
 <li>不依赖第三方库或者中间件。</li>
 <li>算法简单，在内存中进行，效率高。</li>
 </ul>
+<p>缺点：</p>
+<ul>
+<li>强依赖机器的时钟，如果服务器时钟回拨，会导致重复ID生成</li>
+</ul>
+<h4 id="时钟回拨"><a href="#时钟回拨" class="headerlink" title="时钟回拨"></a>时钟回拨</h4><p>时钟回拨，就是服务器上的时间突然倒退到之前的时间。</p>
+<p>时钟回拨通常是由各种系统时钟同步问题引起的，排除人为原因。<br>网络中存在许多参与时间同步的设备，例如NTP服务器，它们都需要时钟同步才能保证网络的准确性和可靠性。</p>
+<p>时钟回拨一般是由以下四个方面原因引发的：</p>
+<ol>
+<li>NTP时间同步。<br> 网络时间协议（Network Time Protocol）最初是由UNIX系统引入的，现在已经成为一种全球性的时间同步协议。NTP服务器从全球各个原子钟获取准确时间，并将尽可能准确的时间广播给其它设备。但是，如果NTP服务器本身时间同步不准确，或者连接到NTP服务器的路由器或防火墙配置不当，就会导致时钟回拨问题。</li>
+<li>虚拟化技术导致的时钟不同步。<br> 在虚拟化环境中，虚拟化层和客户机之前经常需要进行时钟同步。然而，由于虚拟机是共享物理服务器的硬件资源，它们在访问真实时间方面存在困难。这种困难可能会导致时钟回拨问题。</li>
+<li>硬件故障导致的时钟不同步。<br> 磁盘损坏、CPU错误和电源故障等硬件故障都可能导致时钟不同步，从而引发时钟回拨问题。</li>
+<li>操作系统错误。操作系统问题可能会导致时钟回拨问题。</li>
+</ol>
+<p><strong>雪花算法如何解决时钟回拨问题？</strong></p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://github.com/baidu/uid-generator/blob/master/README.zh_cn.md">百度 UIDGenerator</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/Meituan-Dianping/Leaf/blob/master/leaf-core/src/main/java/com/sankuai/inf/leaf/snowflake/SnowflakeIDGenImpl.java">美团 Leaf</a><ul>
+<li>由于强依赖时钟，对时间的要求比较敏感，在机器工作时NTP同步也会造成秒级别的回退，建议可以直接关闭NTP同步。</li>
+<li>要么在时钟回拨的时候直接不提供服务返回ERROR，等时钟追上。</li>
+<li>或者做一层重试，回拨时间小的时候，不生成ID，wait等待时间点到达。</li>
+</ul>
+</li>
+<li>利用拓展位，回拨之后在拓展位上+1，这样依然可以保持ID唯一。但是这个要求我们提前从机器id或者序列号中预留出扩展位。</li>
+</ol>
+<h3 id="数据库生成"><a href="#数据库生成" class="headerlink" title="数据库生成"></a>数据库生成</h3><h2 id="百度-UidGenerator"><a href="#百度-UidGenerator" class="headerlink" title="百度 UidGenerator"></a>百度 UidGenerator</h2><h2 id="美团-Leaf"><a href="#美团-Leaf" class="headerlink" title="美团 Leaf"></a>美团 Leaf</h2><h3 id="leaf-segment"><a href="#leaf-segment" class="headerlink" title="leaf-segment"></a>leaf-segment</h3><p>leaf-segment方案在使用数据库的基础上，做了如下改变：</p>
+<ol>
+<li>原方案每次获取ID都得读写一次数据库，造成数据库压力大。改为利用proxy server批量获取，每次获取一个segment(step决定大小)号段的值。用完之后再去数据库获取新的号段，可以大大的减轻数据库的压力。</li>
+<li>各个业务不同的发号需求用biz_tag字段来区分，每个biz-tag的ID获取相互隔离，互不影响。如果以后有性能需求需要对数据库扩容，不需要上述描述的复杂的扩容操作，只需要对biz_tag分库分表就行。</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">+-------------+--------------+------+-----+-------------------+-----------------------------+</span><br><span class="line">| Field       | Type         | Null | Key | Default           | Extra                       |</span><br><span class="line">+-------------+--------------+------+-----+-------------------+-----------------------------+</span><br><span class="line">| biz_tag     | varchar(128) | NO   | PRI |                   |                             |</span><br><span class="line">| max_id      | bigint(20)   | NO   |     | 1                 |                             |</span><br><span class="line">| step        | int(11)      | NO   |     | NULL              |                             |</span><br><span class="line">| desc        | varchar(256) | YES  |     | NULL              |                             |</span><br><span class="line">| update_time | timestamp    | NO   |     | CURRENT_TIMESTAMP | on update CURRENT_TIMESTAMP |</span><br><span class="line">+-------------+--------------+------+-----+-------------------+-----------------------------+</span><br></pre></td></tr></table></figure>
+
+<p>优点：</p>
+<ol>
+<li>Leaf服务可以很方便的线性扩展，性能完全能够支撑大多数业务场景。</li>
+<li>ID号码是趋势递增的8byte的64位数字，满足上述数据库存储的主键要求。</li>
+<li>容灾性高：Leaf服务内部有号段缓存，即使DB宕机，短时间内Leaf仍能正常对外提供服务。、</li>
+<li>可以自定义max_id的大小，非常方便业务从原有的ID方式上迁移过来。</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>ID号码不够随机，能够泄露发号数量的信息，不太安全。</li>
+<li>TP999数据波动大，当号段使用完之后还是会hang在更新数据库的I/O上，tg999数据会出现偶尔的尖刺。</li>
+<li>DB宕机会造成整个系统不可用。</li>
+</ol>
+<h4 id="双buffer优化"><a href="#双buffer优化" class="headerlink" title="双buffer优化"></a>双buffer优化</h4><p>对于第二个缺点，Leaf-segment做了一些优化，简单的说就是：<br>Leaf 取号段的时机是在号段消耗完的时候进行的，也就意味着号段临界点的ID下发时间取决于下一次从DB取回号段的时间，并且在这期间进来的请求也会因为DB号段没有取回来，导致线程阻塞。如果请求DB的网络和DB的性能稳定，这种情况对系统的影响是不大的，但是假如取DB的时候网络发生抖动，或者DB发生慢查询就会导致整个系统的响应时间变慢。</p>
+<p>为此，我们希望DB取号段的过程能够做到无阻塞，不需要在DB取号段的时候阻塞请求线程，即当号段消费到某个点时就异步的把下一个号段加载到内存中。而不需要等到号段用尽的时候才去更新号段。这样做就可以很大程度上的降低系统的TP999指标。</p>
+<p>采用双buffer的方式，Leaf服务内部有两个号段缓存区segment。当前号段已下发10%时，如果下一个号段未更新，则另启一个更新线程去更新下一个号段。当前号段全部下发完后，如果下个号段准备好了则切换到下个号段为当前segment接着下发，循环往复。</p>
+<ul>
+<li>每个biz-tag都有消费速度监控，通常推荐segment长度设置为服务高峰期发号QPS的600倍（10分钟），这样即使DB宕机，Leaf仍能持续发号10-20分钟不受影响。</li>
+<li>每次请求来临时都会判断下个号段的状态，从而更新此号段，所以偶尔的网络抖动不会影响下个号段的更新。</li>
+</ul>
+<h3 id="leaf-snowflake"><a href="#leaf-snowflake" class="headerlink" title="leaf-snowflake"></a>leaf-snowflake</h3><p>Leaf-segment方案可以生成趋势递增的ID，同时ID号是可计算的，不适用于订单ID生成场景，比如竞对在两天中午12点分别下单，通过订单id号相减就能大致计算出公司一天的订单量，这个是不能忍受的。面对这一问题，我们提供了 Leaf-snowflake方案。</p>
+<h2 id="滴滴-tinyid"><a href="#滴滴-tinyid" class="headerlink" title="滴滴 tinyid"></a>滴滴 tinyid</h2><p>采用segment号段算法实现，tinyid参考了美团leaf，并对其做了扩展，增加了多db支持和tinyid-client，从而获得了更好的性能和可用性。</p>
 </div><div class="tags"><a href="/tags/分布式"><i class="fa fa-tag">分布式</i></a></div><div class="post-nav"><a class="pre" href="/posts/13516.html">Nexus-升级https过程</a><a class="next" href="/posts/18358.html">分布式锁</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
   clientID: '8359b7a19b78f2b9e112',
   clientSecret: '5ad69dc1633a1834322067d017b6313bd231457c',
@@ -33,7 +113,7 @@
   distractionFreeMode: false
 })
 gitalk.render('container')
-</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9B%AA%E8%8A%B1%E7%AE%97%E6%B3%95-snowflake"><span class="toc-text">雪花算法 snowflake</span></a></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%83%8C%E6%99%AF"><span class="toc-text">背景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E6%96%B9%E6%B3%95%E4%BB%8B%E7%BB%8D"><span class="toc-text">常见方法介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#UUID"><span class="toc-text">UUID</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9B%AA%E8%8A%B1%E7%AE%97%E6%B3%95-snowflake"><span class="toc-text">雪花算法 snowflake</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%97%B6%E9%92%9F%E5%9B%9E%E6%8B%A8"><span class="toc-text">时钟回拨</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E7%94%9F%E6%88%90"><span class="toc-text">数据库生成</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%99%BE%E5%BA%A6-UidGenerator"><span class="toc-text">百度 UidGenerator</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BE%8E%E5%9B%A2-Leaf"><span class="toc-text">美团 Leaf</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#leaf-segment"><span class="toc-text">leaf-segment</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8F%8Cbuffer%E4%BC%98%E5%8C%96"><span class="toc-text">双buffer优化</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#leaf-snowflake"><span class="toc-text">leaf-snowflake</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BB%B4%E6%BB%B4-tinyid"><span class="toc-text">滴滴 tinyid</span></a></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2023 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
 if (search_path.length == 0) {
   search_path = 'search.xml';
 }

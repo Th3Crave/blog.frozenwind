@@ -8,10 +8,11 @@
 maven 3.8.1 版本之后，在 settings.xml 中通过配置 mirror 禁用了不安全的 http 链接，默认情况下必须使用 https 的仓库地址。
 
 10.200.17.45 测试机
-1docker run -d -p 8093:8081  -u root --name=nexus-lcf --privileged=true -v /d...</div><p class="readmore"><a href="/posts/13516.html">阅读全文</a></p></div><div class="post"><h1 class="post-title"><a href="/posts/59917.html">分布式ID</a></h1><div class="post-meta">2022-04-11</div><div class="post-content">雪花算法 snowflaketwitter开源的分布式id生成算法。把一个64位的long型的id，1个bit是不用的，用其中的41 bit作为毫秒数，用10 bit作为工作机器id，12 bit作为序列号。理论上最多支持1024台机器每秒生成4096000个序列号。
+1docker run -d -p 8093:8081  -u root --name=nexus-lcf --privileged=true -v /d...</div><p class="readmore"><a href="/posts/13516.html">阅读全文</a></p></div><div class="post"><h1 class="post-title"><a href="/posts/59917.html">分布式ID</a></h1><div class="post-meta">2022-04-11</div><div class="post-content">背景在复杂分布式系统中，往往需要对大量的数据和消息进行唯一标识。如在各产品的系统中，数据日渐增长，对数据分库分表后需要有一个唯一ID来标识一条数据或消息，数据库的自增ID显然不能满足需求，此时一个能够生成全局唯一ID的系统是非常必要的。
+概括下来，那业务系统对ID号的要求有哪些呢？
 
-
-1 bit：固定值0  因为二进制里第一个bit为如果是1，那么都是负数，但是我们生成...</div><p class="readmore"><a href="/posts/59917.html">阅读全文</a></p></div><div class="post"><h1 class="post-title"><a href="/posts/18358.html">分布式锁</a></h1><div class="post-meta">2022-02-24</div><div class="post-content">什么是分布式锁
+全局唯一性：不能出现重复的ID号，既然是唯一标识，这是最基本的要求。
+趋势...</div><p class="readmore"><a href="/posts/59917.html">阅读全文</a></p></div><div class="post"><h1 class="post-title"><a href="/posts/18358.html">分布式锁</a></h1><div class="post-meta">2022-02-24</div><div class="post-content">什么是分布式锁
 线程锁
 进程锁
 分布式锁
@@ -27,7 +28,13 @@ Redis集群：RedLock
 基于Consul
 
 基于Redis实现分布式锁单个Redis实例 - set NX PX + Lua
-加锁 set NX PX + 重试 ...</div><p class="readmore"><a href="/posts/18358.html">阅读全文</a></p></div><div class="post"><h1 class="post-title"><a href="/posts/64143.html">分布式事务</a></h1><div class="post-meta">2022-02-24</div><p class="readmore"><a href="/posts/64143.html">阅读全文</a></p></div><div class="post"><h1 class="post-title"><a href="/posts/9355.html">Nginx</a></h1><div class="post-meta">2022-01-05</div><div class="post-content">什么是Nginx轻量级的Web服务器、反向代理服务器。
+加锁 set NX PX + 重试 ...</div><p class="readmore"><a href="/posts/18358.html">阅读全文</a></p></div><div class="post"><h1 class="post-title"><a href="/posts/64143.html">分布式事务</a></h1><div class="post-meta">2022-02-24</div><div class="post-content">分布式事务是指事务的参与者、支持事务的服务、资源服务器以及事务管理器分别位于不同的分布式系统的不同节点之上。
+分布式事务场景：
+
+电商：提交订单、减库存、扣余额
+需求管理、测试管理：创建测试单、RPC调用修改需求状态
+
+</div><p class="readmore"><a href="/posts/64143.html">阅读全文</a></p></div><div class="post"><h1 class="post-title"><a href="/posts/9355.html">Nginx</a></h1><div class="post-meta">2022-01-05</div><div class="post-content">什么是Nginx轻量级的Web服务器、反向代理服务器。
 正向代理与反向代理
 正向代理由于防火墙的原因，我们不能直接访问谷歌，可以借助VPN来实现，这是简单的正向代理的例子。正向代理“代理”的是客户端，而且客户端是知道目标的，但是目标不知道客户端是通过VPN访问的。
 
