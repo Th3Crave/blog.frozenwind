@@ -10,6 +10,22 @@
 <li>电商：提交订单、减库存、扣余额</li>
 <li>需求管理、测试管理：创建测试单、RPC调用修改需求状态</li>
 </ol>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/a745233700/article/details/122402303">https://blog.csdn.net/a745233700/article/details/122402303</a></p>
+<p>四种模式：</p>
+<ul>
+<li>XA模式 eXtended Architecture 扩展架构：强一致性分阶段事务模式，牺牲了一定的可用性，无业务侵入。<ul>
+<li>两个协议：<ul>
+<li>2PC 两阶段提交</li>
+<li>3PC 三阶段提交</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>TCC模式 try-Confirm-Cancel：最终一致的分阶段事务模式，有业务侵入</li>
+<li>AT模式 auto transaction：最终一致的分阶段事务模式，无业务侵入，也是Seata的默认模式</li>
+<li>SAGA模式：长事务模式，有业务侵入</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/614776580">https://zhuanlan.zhihu.com/p/614776580</a></p>
 </div><div class="tags"><a href="/tags/分布式"><i class="fa fa-tag">分布式</i></a></div><div class="post-nav"><a class="pre" href="/posts/18358.html">分布式锁</a><a class="next" href="/posts/9355.html">Nginx</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
   clientID: '8359b7a19b78f2b9e112',
   clientSecret: '5ad69dc1633a1834322067d017b6313bd231457c',
