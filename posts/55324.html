@@ -40,6 +40,91 @@
 <li>如果只是使用spring(不包含springmvc)，那么是tomcat容器解析xml文件，通过反射实例化对应的类，根据这些servlet规范实现类，触发对应的代码处理逻辑，这个时候tomcat负责http报文的解析和servlet调度的工作。</li>
 <li>如果使用spring mvc，那么tomcat只是解析http报文，然后将其转发给dispatchsetvlet，然后由springmvc根据其配置，实例对应的类，执行对应的逻辑，然后返回结果给dispatchservlet，最后由它转发给tomcat,由tomcat负责构建http报文数据。</li>
 </ol>
+<h2 id="Tomcat源码结构"><a href="#Tomcat源码结构" class="headerlink" title="Tomcat源码结构"></a>Tomcat源码结构</h2><p><img src="/posts/55324/tomcat-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-%E7%9B%AE%E5%BD%95.png"><br>Tomcat 源码位于 <code>java</code> 文件夹下面。<code>java</code>目录下，分为了两个结构，一个是<code>javax</code>，一个是<code>org.apache</code>。</p>
+<h3 id="javax"><a href="#javax" class="headerlink" title="javax"></a>javax</h3><p><img src="/posts/55324/tomcat-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-javax.png"></p>
+<p>在<code>javax</code>中保存的是新的JavaEE规范。可以具体来看看每个目录的作用。</p>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th align="left">作用说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>annotation</td>
+<td align="left">annotation 这个模块的作用是定义了一些公用的注解，避免在不同的规范中定义相同的注解。</td>
+</tr>
+<tr>
+<td>ejb</td>
+<td align="left">ejb是个古老的传说，我们不管</td>
+</tr>
+<tr>
+<td>el</td>
+<td align="left">在jsp中可以使用EL表达式，这么模块解析EL表达式的</td>
+</tr>
+<tr>
+<td>mail</td>
+<td align="left">和邮件相关的规范</td>
+</tr>
+<tr>
+<td>persistence</td>
+<td align="left">持久化相关的</td>
+</tr>
+<tr>
+<td>security</td>
+<td align="left">和安全相关的内容</td>
+</tr>
+<tr>
+<td>servlet</td>
+<td align="left">这个指定的是Servlet的开发规范，Tomcat本质上就是一个实现了Servlet规范的一个容器，Servlet定义了服务端处理Http请求和响应的方式(规范)</td>
+</tr>
+<tr>
+<td>websocket</td>
+<td align="left">定义了使用 websocket 协议的服务端和客户端 API</td>
+</tr>
+<tr>
+<td>xml.ws</td>
+<td align="left">定义了基于 SOAP 协议的 xml 方式的 web 服务</td>
+</tr>
+</tbody></table>
+<h3 id="org-apache"><a href="#org-apache" class="headerlink" title="org.apache"></a>org.apache</h3><p><img src="/posts/55324/tomcat-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-orgapache.png"></p>
+<p><code>org.apache</code>这个包是Tomcat的源码包，也是针对上面的JavaEE规范的部分实现，Tomcat的本质就是对JavaEE的某些规范的实现合集，首先肯定实现了Servlet规范。</p>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th align="left">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>catalina</td>
+<td align="left">catalina是Tomcat的核心模块，里面完整的实现了Servlet规范，Tomcat启动的主方法也在里面，后面我们分析的重点。</td>
+</tr>
+<tr>
+<td>coyote</td>
+<td align="left">tomcat 的核心代码，负责将网络请求转化后和 Catalina 进行通信。</td>
+</tr>
+<tr>
+<td>el</td>
+<td align="left">这个是上面javax中的el规范的实现</td>
+</tr>
+<tr>
+<td>jasper</td>
+<td align="left">主要负责把jsp代码转换为java代码。</td>
+</tr>
+<tr>
+<td>juli</td>
+<td align="left">日志相关的工具</td>
+</tr>
+<tr>
+<td>naming</td>
+<td align="left">命名空间相关的内容</td>
+</tr>
+<tr>
+<td>tomcat</td>
+<td align="left">各种辅助工具，包括 websocket 的实现。</td>
+</tr>
+</tbody></table>
 <h2 id="Tomcat架构设计"><a href="#Tomcat架构设计" class="headerlink" title="Tomcat架构设计"></a>Tomcat架构设计</h2><blockquote>
 <p>Tomcat的前身为Catalina，Catalina又是一个轻量级的Servlet容器<br>在美国，catalina是一个很美的小岛。所以Tomcat作者的寓意可能是想把Tomcat设计成一个优雅美丽且轻量级的web服务器。<br>Tomcat从4.x版本开始除了作为支持Servlet的容器外，额外加入了很多的功能，比如：jsp、el、naming等等，所以说Tomcat不仅仅是Catalina。</p>
 </blockquote>
@@ -125,7 +210,7 @@
   distractionFreeMode: false
 })
 gitalk.render('container')
-</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Web%E5%AE%B9%E5%99%A8%E5%9F%BA%E7%A1%80%E8%AE%A4%E7%9F%A5"><span class="toc-text">Web容器基础认知</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%92%8C%E6%B5%8F%E8%A7%88%E5%99%A8%E7%9A%84%E4%BA%A4%E4%BA%92"><span class="toc-text">如何实现服务器和浏览器的交互</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFServlet"><span class="toc-text">什么是Servlet</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat%E5%92%8CSpring%E3%80%81Spring-MVC%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-text">Tomcat和Spring、Spring MVC的关系</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Spring-MVC"><span class="toc-text">Spring MVC</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#DispatcherServlet"><span class="toc-text">DispatcherServlet</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1"><span class="toc-text">Tomcat架构设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E%E7%BB%84%E4%BB%B6%E7%9A%84%E8%A7%92%E5%BA%A6%E7%9C%8B"><span class="toc-text">从组件的角度看</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#web-xml"><span class="toc-text">web.xml</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E%E4%B8%80%E4%B8%AA%E5%AE%8C%E6%95%B4%E8%AF%B7%E6%B1%82%E7%9A%84%E8%A7%92%E5%BA%A6%E7%9C%8B"><span class="toc-text">从一个完整请求的角度看</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Tomcat%E5%A6%82%E4%BD%95%E6%8E%A5%E6%94%B6%E5%88%B0%E4%B8%80%E4%B8%AAhttp%E8%AF%B7%E6%B1%82"><span class="toc-text">Tomcat如何接收到一个http请求</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%EF%BC%9ATomcat%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E5%90%AF%E5%8A%A8"><span class="toc-text">深入了解：Tomcat初始化与启动</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%EF%BC%9A%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6Connector"><span class="toc-text">深入了解：核心组件Connector</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%EF%BC%9A%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6Container"><span class="toc-text">深入了解：核心组件Container</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Mapper%E7%BB%84%E4%BB%B6%E6%9C%BA%E5%88%B6%E5%8F%8A%E8%AF%B7%E6%B1%82%E5%A4%84%E7%90%86%E6%9C%BA%E5%88%B6"><span class="toc-text">Mapper组件机制及请求处理机制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6"><span class="toc-text">Tomcat 类加载机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%93%E7%A0%B4%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE"><span class="toc-text">打破双亲委派</span></a></li></ol></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2024 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar-toc"><div class="stoc-article" id="sidebar-stoc"><strong class="stoc-title"><i class="fa"> Contents </i></strong><div class="toc-nav" id="stoc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Web%E5%AE%B9%E5%99%A8%E5%9F%BA%E7%A1%80%E8%AE%A4%E7%9F%A5"><span class="toc-text">Web容器基础认知</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%92%8C%E6%B5%8F%E8%A7%88%E5%99%A8%E7%9A%84%E4%BA%A4%E4%BA%92"><span class="toc-text">如何实现服务器和浏览器的交互</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFServlet"><span class="toc-text">什么是Servlet</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat%E5%92%8CSpring%E3%80%81Spring-MVC%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-text">Tomcat和Spring、Spring MVC的关系</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Spring-MVC"><span class="toc-text">Spring MVC</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#DispatcherServlet"><span class="toc-text">DispatcherServlet</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84"><span class="toc-text">Tomcat源码结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#javax"><span class="toc-text">javax</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#org-apache"><span class="toc-text">org.apache</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1"><span class="toc-text">Tomcat架构设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E%E7%BB%84%E4%BB%B6%E7%9A%84%E8%A7%92%E5%BA%A6%E7%9C%8B"><span class="toc-text">从组件的角度看</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#web-xml"><span class="toc-text">web.xml</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E%E4%B8%80%E4%B8%AA%E5%AE%8C%E6%95%B4%E8%AF%B7%E6%B1%82%E7%9A%84%E8%A7%92%E5%BA%A6%E7%9C%8B"><span class="toc-text">从一个完整请求的角度看</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Tomcat%E5%A6%82%E4%BD%95%E6%8E%A5%E6%94%B6%E5%88%B0%E4%B8%80%E4%B8%AAhttp%E8%AF%B7%E6%B1%82"><span class="toc-text">Tomcat如何接收到一个http请求</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%EF%BC%9ATomcat%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E5%90%AF%E5%8A%A8"><span class="toc-text">深入了解：Tomcat初始化与启动</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%EF%BC%9A%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6Connector"><span class="toc-text">深入了解：核心组件Connector</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%EF%BC%9A%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6Container"><span class="toc-text">深入了解：核心组件Container</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Mapper%E7%BB%84%E4%BB%B6%E6%9C%BA%E5%88%B6%E5%8F%8A%E8%AF%B7%E6%B1%82%E5%A4%84%E7%90%86%E6%9C%BA%E5%88%B6"><span class="toc-text">Mapper组件机制及请求处理机制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6"><span class="toc-text">Tomcat 类加载机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%93%E7%A0%B4%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE"><span class="toc-text">打破双亲委派</span></a></li></ol></li></ol></div><script type="text/javascript" src="/js/toc.js?v=1.0.0"></script></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2024 <a href="/." rel="nofollow">frozeNwInd.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0"></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><link rel="stylesheet" type="text/css" href="/css/search.css?v=1.0.0"><script type="text/javascript" src="/js/search.js?v=1.0.0"></script><script>var search_path = 'search.xml';
 if (search_path.length == 0) {
   search_path = 'search.xml';
 }
